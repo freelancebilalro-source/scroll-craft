@@ -14,8 +14,8 @@
 
 ## Links
 
-- 🌐 **Live Demo** → https://scroll-craft-btvq69el3-freelancebilalro-1623s-projects.vercel.app
-- 📦 **NPM** → *(coming soon)*
+- 🌐 **Live Demo** → https://scroll-craft-psi.vercel.app
+- 📦 **NPM** → https://www.npmjs.com/package/scroll-craft
 - 🐙 **GitHub** → https://github.com/Bilal-Studios/scroll-craft
 
 ---
