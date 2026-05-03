@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>scroll-craft — demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;900&family=Outfit:wght@400;500&family=Space+Mono&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #04040F;
+      --bg-alt:  #080818;
+      --cyan:    #00FFD1;
+      --magenta: #FF00C8;
+      --gold:    #FFD166;
+      --text:    #E8E8F0;
+      --muted:   #6B6B80;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; overflow-x: hidden; }
+
+    /* ── Layout ── */
+    section { padding: 120px 24px; max-width: 900px; margin: 0 auto; }
+    h2 { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 900; margin-bottom: 16px; }
+    .label { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); margin-bottom: 12px; }
+    .desc { color: var(--muted); font-size: 1rem; line-height: 1.7; max-width: 560px; margin-bottom: 48px; }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .hero-eyebrow { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase; margin-bottom: 24px; }
+    .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(3rem, 10vw, 6.5rem); font-weight: 900; line-height: 0.95; margin-bottom: 32px; }
+    .hero h1 em { font-style: normal; color: var(--cyan); }
+    .hero p { font-size: 1.125rem; color: var(--muted); max-width: 480px; line-height: 1.7; margin-bottom: 48px; }
+    .badge-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .badge { display: inline-block; padding: 6px 14px; border: 1px solid rgba(0,255,209,0.25); border-radius: 99px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--cyan); }
+    .scroll-hint { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; font-family: 'Space Mono', monospace; letter-spacing: 0.1em; animation: bounce 2s ease-in-out infinite; }
+    .scroll-hint::before { content: ''; width: 1px; height: 48px; background: linear-gradient(var(--cyan), transparent); }
+    @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(8px); } }
+
+    /* ── Divider ── */
+    .divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(0,255,209,0.2), transparent); }
+
+    /* ── Reveal demo ── */
+    .reveal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    .reveal-card {
+      background: var(--bg-alt);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 28px 24px;
+      transition: border-color 0.3s;
+    }
+    .reveal-card:hover { border-color: rgba(0,255,209,0.3); }
+    .card-icon { font-size: 2rem; margin-bottom: 16px; }
+    .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; }
+    .card-text { color: var(--muted); font-size: 0.875rem; line-height: 1.6; }
+
+    /* ── Counter demo ── */
+    .counter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1px; background: rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; }
+    .counter-cell { background: var(--bg-alt); padding: 40px 32px; }
+    .counter-value { font-family: 'Syne', sans-serif; font-size: clamp(2.5rem, 7vw, 4rem); font-weight: 900; color: var(--cyan); line-height: 1; margin-bottom: 8px; }
+    .counter-suffix { display: inline; font-size: 0.6em; color: var(--magenta); }
+    .counter-label { color: var(--muted); font-size: 0.8rem; font-family: 'Space Mono', monospace; letter-spacing: 0.1em; }
+
+    /* ── Progress / Timeline demo ── */
+    .timeline { display: flex; flex-direction: column; gap: 0; }
+    .step {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 24px;
+      padding: 40px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      align-items: start;
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,255,209,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .sc-fill {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, var(--cyan) 0%, transparent 0%);
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 0.05s linear;
+    }
+    .step-body { padding-top: 8px; }
+    .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.25rem; margin-bottom: 8px; }
+    .step-text { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
+
+    /* ── Code snippet ── */
+    .code-block {
+      background: var(--bg-alt);
+      border: 1px solid rgba(0,255,209,0.12);
+      border-radius: 12px;
+      padding: 28px 32px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.8;
+      color: #a0a0b8;
+      overflow-x: auto;
+      margin-top: 40px;
+    }
+    .code-block .kw  { color: var(--magenta); }
+    .code-block .fn  { color: var(--cyan); }
+    .code-block .str { color: var(--gold); }
+    .code-block .cm  { color: #444460; }
+
+    /* ── Footer ── */
+    footer { text-align: center; padding: 80px 24px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.04); }
+    footer a { color: var(--cyan); text-decoration: none; }
+
+    /* ── Direction demo ── */
+    .direction-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .dir-card {
+      background: var(--bg-alt);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .dir-card strong { display: block; font-family: 'Syne', sans-serif; font-size: 1rem; color: var(--text); margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Hero ─────────────────────────────────────────────────────────────────── -->
+<section class="hero" style="position:relative;">
+  <p class="hero-eyebrow js-reveal">scroll-craft v0.1</p>
+  <h1 class="js-reveal" style="--delay:80">Scroll<br/><em>animation</em><br/>that ships.</h1>
+  <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. IntersectionObserver-powered reveals, animated counters, and scroll-progress fills — all in TypeScript.</p>
+  <div class="badge-row js-reveal" style="--delay:240">
+    <span class="badge">0 dependencies</span>
+    <span class="badge">~4KB minified</span>
+    <span class="badge">TypeScript</span>
+    <span class="badge">Tree-shakeable</span>
+  </div>
+  <div class="scroll-hint">scroll</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Reveal ────────────────────────────────────────────────────────────────── -->
+<section id="reveal">
+  <p class="label js-reveal">Effect 01</p>
+  <h2 class="js-reveal" style="--delay:60">Reveal</h2>
+  <p class="desc js-reveal" style="--delay:120">Elements animate into view as they enter the viewport. Configurable direction, distance, duration, and easing.</p>
+
+  <div class="reveal-grid">
+    <div class="js-reveal js-reveal--left reveal-card" style="--delay:0">
+      <div class="card-icon">↑</div>
+      <div class="card-title">From left</div>
+      <div class="card-text">Slides in from the left side of the viewport.</div>
+    </div>
+    <div class="js-reveal reveal-card" style="--delay:80">
+      <div class="card-icon">↕</div>
+      <div class="card-title">From bottom</div>
+      <div class="card-text">Default direction — enters from below with cubic easing.</div>
+    </div>
+    <div class="js-reveal js-reveal--right reveal-card" style="--delay:160">
+      <div class="card-icon">→</div>
+      <div class="card-title">From right</div>
+      <div class="card-text">Slides in from the right with an elastic finish.</div>
+    </div>
+    <div class="js-reveal js-reveal--down reveal-card" style="--delay:240">
+      <div class="card-icon">↓</div>
+      <div class="card-title">From top</div>
+      <div class="card-text">Falls down from above — good for navigation items.</div>
+    </div>
+  </div>
+
+  <div class="code-block js-reveal" style="--delay:80">
+<span class="kw">import</span> { <span class="fn">reveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="cm">// Simple</span>
+<span class="fn">reveal</span>(<span class="str">'.card'</span>)
+
+<span class="cm">// Configured</span>
+<span class="fn">reveal</span>(<span class="str">'.card'</span>, {
+  direction: <span class="str">'left'</span>,
+  distance:  <span class="str">'40px'</span>,
+  duration:  800,
+  ease:      <span class="str">'elasticOut'</span>,
+  delay:     120,
+})
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Counter ───────────────────────────────────────────────────────────────── -->
+<section id="counter">
+  <p class="label js-reveal">Effect 02</p>
+  <h2 class="js-reveal" style="--delay:60">Counter</h2>
+  <p class="desc js-reveal" style="--delay:120">Animate any numeric value from zero. Scroll back up and down to replay.</p>
+
+  <div class="counter-grid js-reveal" style="--delay:80">
+    <div class="counter-cell">
+      <div class="counter-value"><span data-count="94">0</span><span class="counter-suffix">%</span></div>
+      <div class="counter-label">client satisfaction</div>
+    </div>
+    <div class="counter-cell">
+      <div class="counter-value"><span data-count="40">0</span><span class="counter-suffix">+</span></div>
+      <div class="counter-label">projects shipped</div>
+    </div>
+    <div class="counter-cell">
+      <div class="counter-value"><span data-count="3">0</span><span class="counter-suffix">K</span></div>
+      <div class="counter-label">lines extracted</div>
+    </div>
+    <div class="counter-cell">
+      <div class="counter-value"><span data-count="0">0</span></div>
+      <div class="counter-label">dependencies</div>
+    </div>
+  </div>
+
+  <div class="code-block js-reveal" style="--delay:80">
+<span class="kw">import</span> { <span class="fn">counter</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="cm">// Targets [data-count] by default</span>
+<span class="fn">counter</span>(<span class="str">'[data-count]'</span>, {
+  duration:  1400,
+  ease:      <span class="str">'cubicOut'</span>,
+  formatter: (n) => n.<span class="fn">toLocaleString</span>(<span class="str">'en-US'</span>),
+})
+
+<span class="cm">// Custom attribute</span>
+<span class="fn">counter</span>(<span class="str">'.metric'</span>, { attribute: <span class="str">'data-value'</span> })
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Progress ──────────────────────────────────────────────────────────────── -->
+<section id="progress">
+  <p class="label js-reveal">Effect 03</p>
+  <h2 class="js-reveal" style="--delay:60">Progress</h2>
+  <p class="desc js-reveal" style="--delay:120">Fill elements as each step scrolls through the viewport. Watch the circles fill as you scroll.</p>
+
+  <div class="timeline" id="demo-timeline">
+    <div class="step">
+      <div class="step-num">
+        <span>01</span>
+        <div class="sc-fill"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Extract</div>
+        <div class="step-text">Pull existing scroll logic out of your production code into a reusable module.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">
+        <span>02</span>
+        <div class="sc-fill"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Package</div>
+        <div class="step-text">Add TypeScript types, JSDoc, and a tsup build config for ESM + CJS output.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">
+        <span>03</span>
+        <div class="sc-fill"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Publish</div>
+        <div class="step-text">Push to npm. Drop into any project with one import — no stylesheet required.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">
+        <span>04</span>
+        <div class="sc-fill"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Embed</div>
+        <div class="step-text">Use as ESM import, CJS require, or a plain &lt;script&gt; tag on any page.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block js-reveal" style="--delay:80">
+<span class="kw">import</span> { <span class="fn">progress</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="cm">// Each .step needs a child .sc-fill that gets clip-path animated</span>
+<span class="fn">progress</span>(<span class="str">'#timeline .step'</span>, {
+  start: 0.82, <span class="cm">// fill starts when step top is 82% down viewport</span>
+  end:   0.2,  <span class="cm">// fill ends when step top is 20% down viewport</span>
+  fillSelector: <span class="str">'.sc-fill'</span>,
+})
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Class API ─────────────────────────────────────────────────────────────── -->
+<section id="api">
+  <p class="label js-reveal">API</p>
+  <h2 class="js-reveal" style="--delay:60">Chainable class</h2>
+  <p class="desc js-reveal" style="--delay:120">All three effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
+
+  <div class="code-block js-reveal" style="--delay:80">
+<span class="kw">import</span> ScrollCraft <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="kw">const</span> sc = <span class="kw">new</span> <span class="fn">ScrollCraft</span>()
+
+sc.<span class="fn">reveal</span>(<span class="str">'.hero-text'</span>, { delay: 100, direction: <span class="str">'up'</span> })
+  .<span class="fn">counter</span>(<span class="str">'[data-count]'</span>, { duration: 1200 })
+  .<span class="fn">progress</span>(<span class="str">'#timeline .step'</span>)
+
+<span class="cm">// Later — disconnect all observers + listeners</span>
+sc.<span class="fn">destroy</span>()
+  </div>
+</section>
+
+<!-- ── Footer ────────────────────────────────────────────────────────────────── -->
+<footer>
+  <p>Built by <a href="https://bilalstudio.io">Bilal Studio</a> · <a href="https://github.com/bilalstudio/scroll-craft">GitHub</a> · <a href="https://npmjs.com/package/scroll-craft">npm</a></p>
+</footer>
+
+<script type="module">
+  // In production this would be: import ScrollCraft from 'scroll-craft'
+  // For the demo we inline a minimal version of the library logic
+
+  // ── Easing ──
+  const ease = {
+    cubicOut:   t => 1 - (1 - t) ** 3,
+    elasticOut: t => t === 0 || t === 1 ? t : 2 ** (-10 * t) * Math.sin((t * 10 - 0.75) * (2 * Math.PI / 3)) + 1,
+    backOut:    t => { const c = 2.70158; return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2 },
+  }
+
+  // ── Reveal ──
+  function revealEls(els, { delay = 0, distance = '24px', direction = 'up', duration = 600, easeFn = ease.cubicOut } = {}) {
+    const tx = direction === 'left' ? distance : direction === 'right' ? `-${distance}` : '0'
+    const ty = direction === 'up'   ? distance : direction === 'down'  ? `-${distance}` : '0'
+    els.forEach(el => {
+      el.style.opacity = '0'
+      el.style.transform = `translate(${tx}, ${ty})`
+      el.style.willChange = 'opacity, transform'
+    })
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return
+        const el = entry.target
+        const elDelay = delay + (Number(el.style.getPropertyValue('--delay')) || 0)
+        const start = performance.now() + elDelay
+        const dist = parseFloat(distance)
+        const unit = distance.replace(/[\d.-]/g, '') || 'px'
+        function step(now) {
+          if (now < start) { requestAnimationFrame(step); return }
+          const p = Math.min(1, (now - start) / duration)
+          const e = easeFn(p)
+          el.style.opacity = e
+          if (direction === 'left' || direction === 'right') {
+            el.style.transform = `translateX(${dist * (direction === 'left' ? (1 - e) : -(1 - e))}${unit})`
+          } else {
+            el.style.transform = `translateY(${dist * (direction === 'up' ? (1 - e) : -(1 - e))}${unit})`
+          }
+          if (p < 1) requestAnimationFrame(step)
+          else { el.style.opacity = '1'; el.style.transform = 'none'; el.style.willChange = 'auto' }
+        }
+        requestAnimationFrame(step)
+        obs.unobserve(el)
+      })
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' })
+    els.forEach(el => obs.observe(el))
+  }
+
+  // ── Counter ──
+  function animateCounters() {
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return
+        const el = entry.target
+        const target = Number(el.dataset.count || 0)
+        const start = performance.now()
+        const duration = 1400
+        function step(now) {
+          const p = Math.min(1, (now - start) / duration)
+          el.textContent = Math.round(target * ease.cubicOut(p)).toLocaleString('en-US')
+          if (p < 1) requestAnimationFrame(step)
+        }
+        requestAnimationFrame(step)
+        obs.unobserve(el)
+      })
+    }, { threshold: 0.45 })
+    document.querySelectorAll('[data-count]').forEach(el => obs.observe(el))
+  }
+
+  // ── Progress ──
+  function animateProgress() {
+    const steps = document.querySelectorAll('#demo-timeline .step')
+    const fills = [...steps].map(s => s.querySelector('.sc-fill'))
+    function update() {
+      const winH = window.innerHeight
+      steps.forEach((step, i) => {
+        if (!fills[i]) return
+        const rect = step.getBoundingClientRect()
+        const prog = Math.min(1, Math.max(0, (winH * 0.82 - rect.top) / (winH * 0.62)))
+        fills[i].style.clipPath = `inset(0 ${Math.round((1 - prog) * 100)}% 0 0)`
+        fills[i].style.background = `conic-gradient(from 0deg, #00FFD1 ${Math.round(prog * 360)}deg, transparent 0deg)`
+      })
+    }
+    window.addEventListener('scroll', update, { passive: true })
+    update()
+  }
+
+  // ── Init ──
+  revealEls(document.querySelectorAll('.js-reveal'))
+  revealEls(document.querySelectorAll('.js-reveal--left'),  { direction: 'left',  distance: '40px', easeFn: ease.elasticOut })
+  revealEls(document.querySelectorAll('.js-reveal--right'), { direction: 'right', distance: '40px', easeFn: ease.elasticOut })
+  revealEls(document.querySelectorAll('.js-reveal--down'),  { direction: 'down',  distance: '32px', easeFn: ease.backOut })
+  animateCounters()
+  animateProgress()
+</script>
+
+</body>
+</html>
