@@ -576,9 +576,9 @@
   <div class="code-block"><span class="kw">import</span> { <span class="fn">scene</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="fn">scene</span>(<span class="str">'.story'</span>, [
-  { target: <span class="str">'.title'</span>, from: { opacity: 0 }, to: { opacity: 1 } },
-  { target: <span class="str">'.image'</span>, from: { y: 80 }, to: { y: 0 } },
-  { target: <span class="str">'.card'</span>, from: { rotate: -8 }, to: { rotate: 0 } },
+  { target: <span class="str">'.title'</span>, start: 0,   end: 0.3, from: { opacity: 0 }, to: { opacity: 1 } },
+  { target: <span class="str">'.image'</span>, start: 0.2, end: 0.7, from: { y: 80 }, to: { y: 0 } },
+  { target: <span class="str">'.card'</span>,  start: 0.5, end: 1,   from: { rotate: -8 }, to: { rotate: 0 } },
 ])</div>
 </section>
 
@@ -810,6 +810,9 @@
         el,
         from: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, ...step.from },
         to: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, ...step.to },
+        start: step.start ?? 0,
+        end: step.end ?? 1,
+        easeFn: step.easeFn || easeFn,
       }))),
     })).filter(state => state.steps.length)
     let frame = 0
@@ -824,8 +827,13 @@
       return a + (b - a) * p
     }
 
+    function localProgress(step, progress) {
+      if (step.start === step.end) return progress >= step.end ? 1 : 0
+      return Math.min(1, Math.max(0, (progress - step.start) / (step.end - step.start)))
+    }
+
     function writeStep(step, progress) {
-      const p = easeFn(progress)
+      const p = step.easeFn(localProgress(step, progress))
       const opacity = mix(step.from.opacity, step.to.opacity, p)
       const x = mix(step.from.x, step.to.x, p)
       const y = mix(step.from.y, step.to.y, p)
@@ -877,9 +885,9 @@
   function restartScene() {
     stopScene()
     stopScene = createScene('#scene-demo', [
-      { target: '.scene-title', from: { opacity: 0, y: 32 }, to: { opacity: 1, y: 0 } },
-      { target: '.scene-image', from: { y: 80, scale: 0.92 }, to: { y: 0, scale: 1 } },
-      { target: '.scene-card', from: { opacity: 0.25, x: -20, rotate: -8 }, to: { opacity: 1, x: 0, rotate: 0 } },
+      { target: '.scene-title', start: 0, end: 0.3, from: { opacity: 0, y: 32 }, to: { opacity: 1, y: 0 } },
+      { target: '.scene-image', start: 0.2, end: 0.7, from: { y: 80, scale: 0.92 }, to: { y: 0, scale: 1 } },
+      { target: '.scene-card', start: 0.5, end: 1, from: { opacity: 0.25, x: -20, rotate: -8 }, to: { opacity: 1, x: 0, rotate: 0 } },
     ])
   }
 

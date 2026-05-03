@@ -80,6 +80,12 @@ export interface SceneStep {
   from: SceneValues
   /** Values at progress 1. */
   to: SceneValues
+  /** Scene progress where this step starts. Default: 0 */
+  start?: number
+  /** Scene progress where this step ends. Default: 1 */
+  end?: number
+  /** Step-specific easing. Defaults to SceneOptions.ease */
+  ease?: EaseName | EaseFn
 }
 
 export interface SceneOptions {
@@ -233,6 +239,7 @@ function transformForProgress(direction: Direction, distance: string, progress: 
 function resolveSceneStepElements(section: Element, target: SceneStep['target']): HTMLElement[] {
   if (typeof target === 'string') return Array.from(section.querySelectorAll(target)) as HTMLElement[]
   if (target instanceof Element) return [target as HTMLElement]
+  if (Array.isArray(target)) return target as HTMLElement[]
   return Array.from(target as NodeList) as HTMLElement[]
 }
 
@@ -329,12 +336,14 @@ type SceneStepElementState = {
   willChange: string
   from: Required<SceneValues>
   to: Required<SceneValues>
+  start: number
+  end: number
+  easeFn: EaseFn
 }
 
 type SceneElementState = {
   section: HTMLElement
   top: number
-  height: number
   visible: boolean
   steps: SceneStepElementState[]
 }
@@ -800,7 +809,6 @@ export function scene(
   const sections = resolveElements(target) as HTMLElement[]
   if (!sections.length || !steps.length) return () => {}
 
-  const easeFn = resolveEase(ease)
   const reduceMotion = typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
     : null
@@ -810,6 +818,7 @@ export function scene(
   const states = sections.map<SceneElementState>((section) => {
     const stepStates = steps.reduce<SceneStepElementState[]>((acc, step) => {
       const normalized = normalizeSceneValues(step.from, step.to)
+      const stepEaseFn = resolveEase(step.ease ?? ease)
       const targetStates = resolveSceneStepElements(section, step.target).map<SceneStepElementState>((element) => ({
         element,
         opacity: element.style.opacity,
@@ -817,6 +826,9 @@ export function scene(
         willChange: element.style.willChange,
         from: normalized.from,
         to: normalized.to,
+        start: step.start ?? 0,
+        end: step.end ?? 1,
+        easeFn: stepEaseFn,
       }))
       acc.push(...targetStates)
       return acc
@@ -825,7 +837,6 @@ export function scene(
     return {
       section,
       top: 0,
-      height: 0,
       visible: !('IntersectionObserver' in window),
       steps: stepStates,
     }
@@ -840,8 +851,13 @@ export function scene(
     return Math.min(1, Math.max(0, (startPx - top) / (startPx - endPx)))
   }
 
+  function localProgress(step: SceneStepElementState, progress: number): number {
+    if (step.start === step.end) return progress >= step.end ? 1 : 0
+    return Math.min(1, Math.max(0, (progress - step.start) / (step.end - step.start)))
+  }
+
   function applyStep(state: SceneStepElementState, progress: number): void {
-    const eased = easeFn(progress)
+    const eased = state.easeFn(localProgress(state, progress))
     const values: Required<SceneValues> = {
       opacity: interpolate(state.from.opacity, state.to.opacity, eased),
       x: interpolate(state.from.x, state.to.x, eased),
@@ -852,7 +868,10 @@ export function scene(
 
     state.element.style.opacity = String(values.opacity)
     state.element.style.transform = sceneTransform(values)
-    state.element.style.willChange = 'opacity, transform'
+  }
+
+  function restoreStepWillChange(step: SceneStepElementState): void {
+    step.element.style.willChange = step.willChange
   }
 
   function applyProgress(progress: number): void {
@@ -866,7 +885,6 @@ export function scene(
     states.forEach((state) => {
       const rect = state.section.getBoundingClientRect()
       state.top = rect.top
-      state.height = rect.height
       if (!observer) state.visible = rect.bottom >= 0 && rect.top <= window.innerHeight
       if (scrollY === 0 && rect.top > window.innerHeight) state.visible = true
     })
@@ -877,14 +895,28 @@ export function scene(
 
     if (reduceMotion?.matches) {
       applyProgress(1)
+      states.forEach((state) => {
+        state.steps.forEach(restoreStepWillChange)
+      })
       return
     }
 
     states.forEach((state) => {
       const progress = progressForTop(state.top)
       const isRelevant = state.visible || progress === 0 || progress === 1
-      if (!isRelevant) return
-      state.steps.forEach((step) => applyStep(step, progress))
+      if (!isRelevant) {
+        state.steps.forEach(restoreStepWillChange)
+        return
+      }
+      state.steps.forEach((step) => {
+        const isActive = state.visible || (progress > step.start && progress < step.end)
+        if (isActive) {
+          step.element.style.willChange = 'opacity, transform'
+        } else {
+          restoreStepWillChange(step)
+        }
+        applyStep(step, progress)
+      })
     })
   }
 
@@ -899,12 +931,6 @@ export function scene(
   function handleMotionChange(): void {
     schedule()
   }
-
-  states.forEach((state) => {
-    state.steps.forEach((step) => {
-      step.element.style.willChange = 'opacity, transform'
-    })
-  })
 
   if ('IntersectionObserver' in window) {
     observer = new IntersectionObserver((entries) => {

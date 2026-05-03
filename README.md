@@ -208,9 +208,9 @@ Create a scroll-driven timeline for a section, similar to a scrubbed ScrollTrigg
 import { scene } from 'scroll-craft'
 
 scene('.story', [
-  { target: '.title', from: { opacity: 0 }, to: { opacity: 1 } },
-  { target: '.image', from: { y: 80 }, to: { y: 0 } },
-  { target: '.card', from: { rotate: -8 }, to: { rotate: 0 } },
+  { target: '.title', start: 0, end: 0.3, from: { opacity: 0 }, to: { opacity: 1 } },
+  { target: '.image', start: 0.2, end: 0.7, from: { y: 80 }, to: { y: 0 } },
+  { target: '.card', start: 0.5, end: 1, from: { rotate: -8 }, to: { rotate: 0 } },
 ], {
   start: 0.9,
   end: 0.1,
@@ -226,6 +226,24 @@ progress 1 = section top hits end * viewport height
 ```
 
 With the defaults, the timeline starts when the section top reaches 90% down the viewport and finishes when it reaches 10% down the viewport. Step selectors are resolved inside each matching section, so the same scene definition can be reused across multiple sections.
+
+Each step can run across its own slice of the scene timeline:
+
+```ts
+scene('.story', [
+  { target: '.title', start: 0, end: 0.3, from: { opacity: 0 }, to: { opacity: 1 } },
+  { target: '.image', start: 0.2, end: 0.7, from: { y: 80 }, to: { y: 0 } },
+  { target: '.card', start: 0.5, end: 1, from: { rotate: -8 }, to: { rotate: 0 } },
+])
+```
+
+For each step, local progress is calculated as:
+
+```txt
+local = clamp((sceneProgress - step.start) / (step.end - step.start), 0, 1)
+```
+
+Step `start` defaults to `0`, step `end` defaults to `1`, and step `ease` defaults to the parent scene `ease`.
 
 Supported animated values:
 
@@ -426,6 +444,9 @@ Each step accepts:
 | `target` | `string \| Element \| NodeList \| Element[]` | Element(s) to animate; string selectors are section-relative |
 | `from` | `SceneValues` | Values at progress 0 |
 | `to` | `SceneValues` | Values at progress 1 |
+| `start` | `number` | Scene progress where this step starts. Default: `0` |
+| `end` | `number` | Scene progress where this step ends. Default: `1` |
+| `ease` | `EaseName \| EaseFn` | Step easing. Default: inherited scene `ease` |
 
 `SceneValues` supports `opacity`, `x`, `y`, `scale`, and `rotate`.
 
