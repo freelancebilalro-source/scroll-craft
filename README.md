@@ -14,7 +14,7 @@
 
 ## Links
 
-- 🌐 **Live Demo** → https://scroll-craft-psi.vercel.app
+- 🌐 **Live Demo** → https://scroll-craft.bilalstudio.io
 - 📦 **NPM** → https://www.npmjs.com/package/scroll-craft
 - 🐙 **GitHub** → https://github.com/Bilal-Studios/scroll-craft
 
