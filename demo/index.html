@@ -9,1045 +9,639 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #04040F; --bg-alt: #080818; --cyan: #00FFD1;
-      --magenta: #FF00C8; --gold: #FFD166; --text: #E8E8F0; --muted: #6B6B80;
+      --bg: #04040F; --bg-alt: #080818; --card: #0C0C1A;
+      --cyan: #00FFD1; --magenta: #FF00C8; --gold: #FFD166;
+      --text: #E8E8F0; --muted: #6B6B80; --border: rgba(255,255,255,0.07);
     }
-    html { scroll-behavior: smooth; scroll-snap-type: y proximity; }
-    body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; overflow-x: hidden; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; }
 
-    .page-progress {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 100;
-      width: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--gold));
-      box-shadow: 0 0 24px rgba(0,255,209,0.35);
-      pointer-events: none;
-      will-change: width;
+    /* ── Top nav ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 56px;
+      background: rgba(4,4,15,0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
     }
+    .nav-logo { font-family: 'Syne', sans-serif; font-weight: 900; font-size: 1rem; color: var(--text); text-decoration: none; letter-spacing: -0.02em; }
+    .nav-logo span { color: var(--cyan); }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--cyan); }
+    .nav-npm { font-family: 'Space Mono', monospace; font-size: 11px; padding: 6px 14px; border: 1px solid rgba(0,255,209,0.3); border-radius: 99px; color: var(--cyan); text-decoration: none; transition: background 0.2s; }
+    .nav-npm:hover { background: rgba(0,255,209,0.08); }
 
-    /* snap sections */
-    .snap-section {
-      scroll-snap-align: start;
-      min-height: 100svh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 72px 24px;
-      max-width: 900px;
-      margin: 0 auto;
-      width: 100%;
-    }
-    .hero-wrap {
-      scroll-snap-align: start;
-      min-height: 100svh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
-    }
-    .hero-inner { padding: 0 24px; max-width: 900px; margin: 0 auto; width: 100%; }
-
-    h2 { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 900; margin-bottom: 14px; }
-    .desc { color: var(--muted); font-size: 1rem; line-height: 1.7; max-width: 560px; margin-bottom: 36px; }
-
-    /* section header */
-    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .label { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); }
-
-    /* replay button */
-    .replay-btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border: 1px solid rgba(0,255,209,0.25); border-radius: 99px;
-      background: transparent; color: var(--cyan);
-      font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.1em;
-      cursor: pointer; transition: background 0.2s, border-color 0.2s; flex-shrink: 0;
-    }
-    .replay-btn:hover { background: rgba(0,255,209,0.08); border-color: rgba(0,255,209,0.5); }
-    .replay-btn svg { width: 12px; height: 12px; }
-
-    /* hero */
-    .hero-eyebrow { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase; margin-bottom: 24px; }
-    .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(3rem, 10vw, 6.5rem); font-weight: 900; line-height: 0.95; margin-bottom: 32px; }
+    /* ── Hero ── */
+    .hero { padding: 80px 32px 64px; max-width: 1200px; margin: 0 auto; }
+    .hero-kicker { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cyan); margin-bottom: 20px; }
+    .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(2.5rem, 7vw, 5rem); font-weight: 900; line-height: 0.95; margin-bottom: 20px; }
     .hero h1 em { font-style: normal; color: var(--cyan); }
-    .hero p { font-size: 1.125rem; color: var(--muted); max-width: 560px; line-height: 1.7; margin-bottom: 48px; }
-    .badge-row { display: flex; gap: 12px; flex-wrap: wrap; }
-    .badge { display: inline-block; padding: 6px 14px; border: 1px solid rgba(0,255,209,0.25); border-radius: 99px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--cyan); }
-    .scroll-hint { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; font-family: 'Space Mono', monospace; letter-spacing: 0.1em; animation: bounce 2s ease-in-out infinite; }
-    .scroll-hint::before { content: ''; width: 1px; height: 48px; background: linear-gradient(var(--cyan), transparent); }
-    @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)} }
+    .hero p { color: var(--muted); font-size: 1rem; max-width: 480px; line-height: 1.7; margin-bottom: 32px; }
+    .hero-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .install-box { display: flex; align-items: center; gap: 10px; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted); }
+    .install-box span { color: var(--cyan); }
+    .copy-btn { background: none; border: none; cursor: pointer; color: var(--muted); display: flex; align-items: center; transition: color 0.2s; }
+    .copy-btn:hover { color: var(--cyan); }
+    .copy-btn svg { width: 14px; height: 14px; }
+    .badge { display: inline-block; padding: 5px 12px; border: 1px solid var(--border); border-radius: 99px; font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); }
 
-    /* reveal */
-    .reveal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-    .reveal-card { background: var(--bg-alt); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 28px 24px; transition: border-color 0.3s; }
-    .reveal-card:hover { border-color: rgba(0,255,209,0.3); }
-    .card-icon { font-size: 2rem; margin-bottom: 14px; }
-    .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; }
-    .card-text { color: var(--muted); font-size: 0.875rem; line-height: 1.6; }
+    /* ── Filter bar ── */
+    .filter-bar { padding: 0 32px 32px; max-width: 1200px; margin: 0 auto; display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+    .filter-btn:hover, .filter-btn.active { background: rgba(0,255,209,0.08); border-color: rgba(0,255,209,0.4); color: var(--cyan); }
 
-    /* counter */
-    .counter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1px; background: rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; }
-    .counter-cell { background: var(--bg-alt); padding: 36px 28px; }
-    .counter-value { font-family: 'Syne', sans-serif; font-size: clamp(2.5rem, 7vw, 4rem); font-weight: 900; color: var(--cyan); line-height: 1; margin-bottom: 8px; }
-    .counter-suffix { font-size: 0.6em; color: var(--magenta); }
-    .counter-label { color: var(--muted); font-size: 0.8rem; font-family: 'Space Mono', monospace; letter-spacing: 0.1em; }
+    /* ── Cards grid ── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; padding: 0 32px 80px; max-width: 1200px; margin: 0 auto; }
 
-    /* progress */
-    .timeline { display: grid; gap: 0; }
-    .step { padding: 28px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
-    .step:last-child { border-bottom: none; }
-    .step-num-wrap { display: block; position: relative; margin-bottom: 1.2rem; font-family: 'Syne', sans-serif; font-size: clamp(2.8rem, 8vw, 5rem); font-weight: 900; line-height: 0.85; user-select: none; }
-    .step-num-ghost { display: block; color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
-    .sc-fill { position: absolute; inset: 0; display: block; color: var(--cyan); text-shadow: 0 0 24px rgba(0,255,209,0.5); clip-path: inset(0 100% 0 0); transition: clip-path 0.1s linear; will-change: clip-path; }
-    .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.2rem; margin-bottom: 6px; }
-    .step-text { color: var(--muted); font-size: 0.88rem; line-height: 1.7; }
-
-    /* text reveal */
-    .text-reveal-showcase { display: grid; gap: 28px; padding: 34px; background: radial-gradient(circle at top left, rgba(0,255,209,0.16), transparent 35%), linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border: 1px solid rgba(0,255,209,0.14); border-radius: 22px; overflow: hidden; }
-    .text-reveal-line { font-family: 'Syne', sans-serif; font-size: clamp(2.25rem, 7vw, 4.7rem); font-weight: 900; line-height: 0.95; letter-spacing: -0.04em; }
-    .text-reveal-line em { color: var(--cyan); font-style: normal; }
-    .text-reveal-note { max-width: 620px; color: #9696aa; font-size: 1rem; line-height: 1.7; }
-
-    /* stagger */
-    .stagger-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
-    .stagger-tile { padding: 24px; background: linear-gradient(160deg, rgba(0,255,209,0.12), rgba(255,0,200,0.08)), var(--bg-alt); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; }
-    .stagger-kicker { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--gold); text-transform: uppercase; margin-bottom: 16px; }
-    .stagger-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 900; margin-bottom: 8px; }
-    .stagger-copy { color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
-
-    /* blur reveal */
-    .blur-panel { position: relative; padding: clamp(32px, 7vw, 64px); min-height: 260px; display: grid; align-content: end; overflow: hidden; background: radial-gradient(circle at 78% 20%, rgba(255,209,102,0.22), transparent 28%), radial-gradient(circle at 18% 20%, rgba(0,255,209,0.18), transparent 30%), linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.1); border-radius: 28px; }
-    .blur-orb { position: absolute; width: 220px; height: 220px; right: -40px; top: -50px; border-radius: 999px; background: linear-gradient(135deg, var(--cyan), var(--magenta)); filter: blur(20px); opacity: 0.24; }
-    .blur-title { position: relative; font-family: 'Syne', sans-serif; font-size: clamp(2.4rem, 8vw, 5rem); font-weight: 900; line-height: 0.94; letter-spacing: -0.05em; margin-bottom: 16px; }
-    .blur-copy { position: relative; max-width: 560px; color: #aaaabe; line-height: 1.7; }
-
-    /* zoom */
-    .zoom-stage { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 20px; }
-    .zoom-card { min-height: 220px; padding: 28px; display: grid; align-content: end; background: radial-gradient(circle at 18% 18%, rgba(255,0,200,0.2), transparent 32%), linear-gradient(145deg, rgba(0,255,209,0.11), rgba(255,255,255,0.03)); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; overflow: hidden; }
-    .zoom-card--alt { background: radial-gradient(circle at 80% 20%, rgba(255,209,102,0.25), transparent 30%), linear-gradient(145deg, rgba(255,255,255,0.08), rgba(0,255,209,0.04)); }
-    .zoom-number { font-family: 'Syne', sans-serif; font-size: clamp(3.5rem, 10vw, 6rem); font-weight: 900; line-height: 0.8; color: var(--cyan); margin-bottom: 20px; }
-    .zoom-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 900; margin-bottom: 8px; }
-    .zoom-copy { color: var(--muted); line-height: 1.65; font-size: 0.9rem; }
-    @media (max-width: 600px) { .zoom-stage { grid-template-columns: 1fr; } }
-
-    /* parallax */
-    .parallax-scene {
-      position: relative;
-      min-height: 420px;
+    .effect-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 30px;
-      background:
-        radial-gradient(circle at 18% 24%, rgba(0,255,209,0.2), transparent 26%),
-        radial-gradient(circle at 82% 28%, rgba(255,0,200,0.18), transparent 28%),
-        linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.25s;
     }
-    .parallax-grid {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
-      background-size: 48px 48px;
-      mask-image: radial-gradient(circle at center, black, transparent 74%);
-      opacity: 0.55;
-    }
-    .parallax-layer {
-      position: absolute;
-      display: grid;
-      place-items: center;
-      border-radius: 999px;
-      font-family: 'Syne', sans-serif;
-      font-weight: 900;
-      will-change: transform;
-    }
-    .parallax-layer--one {
-      width: clamp(170px, 28vw, 280px);
-      height: clamp(170px, 28vw, 280px);
-      left: 8%;
-      top: 14%;
-      color: #02120f;
-      background: linear-gradient(135deg, var(--cyan), #8cffea);
-      box-shadow: 0 30px 80px rgba(0,255,209,0.22);
-      font-size: clamp(3.2rem, 9vw, 6.8rem);
-      z-index: 2;
-    }
-    .parallax-layer--two {
-      width: clamp(130px, 20vw, 210px);
-      height: clamp(130px, 20vw, 210px);
-      right: 10%;
-      bottom: 13%;
-      color: #190014;
-      background: linear-gradient(135deg, var(--magenta), var(--gold));
-      box-shadow: 0 30px 80px rgba(255,0,200,0.2);
-      font-size: clamp(2.7rem, 7vw, 5.2rem);
-      z-index: 3;
-    }
-    .parallax-caption {
-      position: absolute;
-      left: 34px;
-      bottom: 28px;
-      max-width: 290px;
-      color: #bcbcd0;
-      font-size: 0.9rem;
-      line-height: 1.65;
-      z-index: 4;
-    }
-    @media (max-width: 600px) {
-      .parallax-scene { min-height: 360px; }
-      .parallax-layer--one { left: -4%; top: 12%; }
-      .parallax-layer--two { right: -6%; bottom: 20%; }
-      .parallax-caption { left: 22px; right: 22px; bottom: 22px; }
-    }
+    .effect-card:hover { border-color: rgba(0,255,209,0.2); }
 
-    /* scroll progress */
-    .scroll-progress-demo {
-      display: grid;
-      gap: 22px;
-      padding: 28px;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 26px;
-      background: linear-gradient(145deg, rgba(0,255,209,0.09), rgba(255,255,255,0.025));
-    }
-    .progress-rail {
-      position: relative;
-      height: 16px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-    }
-    .progress-rail__fill {
-      height: 100%;
-      width: 0;
-      background: linear-gradient(90deg, var(--cyan), var(--magenta));
-      will-change: width;
-    }
-    .progress-meter {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 18px;
+    /* preview area */
+    .preview {
+      height: 260px;
+      background: var(--bg-alt);
+      border-bottom: 1px solid var(--border);
+      display: flex;
       align-items: center;
-    }
-    .progress-meter__value {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(3rem, 10vw, 6rem);
-      font-weight: 900;
-      line-height: 0.9;
-      color: var(--cyan);
-      min-width: 3ch;
-    }
-    .progress-meter__text {
-      color: var(--muted);
-      line-height: 1.7;
-    }
-
-    /* scene */
-    .scene-stage {
+      justify-content: center;
       position: relative;
-      display: grid;
-      grid-template-columns: 1fr 0.88fr;
-      gap: 24px;
-      align-items: stretch;
-      min-height: 420px;
-    }
-    .scene-visual {
-      position: relative;
-      min-height: 360px;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 30px;
-      background:
-        radial-gradient(circle at 24% 20%, rgba(0,255,209,0.2), transparent 30%),
-        radial-gradient(circle at 74% 82%, rgba(255,0,200,0.18), transparent 28%),
-        linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
     }
-    .scene-image {
-      position: absolute;
-      inset: 42px;
-      display: grid;
-      place-items: center;
-      border-radius: 24px;
-      background:
-        linear-gradient(135deg, rgba(0,255,209,0.94), rgba(255,209,102,0.9)),
-        repeating-linear-gradient(45deg, rgba(4,4,15,0.18) 0 10px, transparent 10px 20px);
-      color: #06110f;
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(4rem, 12vw, 8rem);
-      font-weight: 900;
-      box-shadow: 0 30px 90px rgba(0,255,209,0.16);
-      will-change: transform, opacity;
-    }
-    .scene-copy {
-      display: grid;
-      align-content: center;
-      gap: 18px;
-    }
-    .scene-title {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(2.8rem, 8vw, 5.8rem);
-      font-weight: 900;
-      line-height: 0.92;
-      letter-spacing: -0.055em;
-      will-change: transform, opacity;
-    }
-    .scene-card {
-      padding: 24px;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 22px;
-      background: linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.025));
-      color: #bdbdd1;
-      line-height: 1.7;
-      transform-origin: left center;
-      will-change: transform, opacity;
-    }
-    @media (max-width: 760px) {
-      .scene-stage { grid-template-columns: 1fr; }
-      .scene-visual { min-height: 300px; }
-      .scene-image { inset: 30px; }
-    }
+    .preview-inner { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px; }
 
-    /* code */
-    .code-block { background: var(--bg-alt); border: 1px solid rgba(0,255,209,0.12); border-radius: 12px; padding: 22px 26px; font-family: 'Space Mono', monospace; font-size: 0.78rem; line-height: 1.8; color: #a0a0b8; overflow-x: auto; margin-top: 28px; }
+    /* card footer */
+    .card-foot { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+    .card-head-row { display: flex; align-items: center; justify-content: space-between; }
+    .effect-name { font-family: 'Syne', sans-serif; font-weight: 900; font-size: 1rem; }
+    .effect-tag { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); background: rgba(0,255,209,0.08); border: 1px solid rgba(0,255,209,0.15); border-radius: 99px; padding: 3px 8px; }
+    .effect-desc { color: var(--muted); font-size: 0.82rem; line-height: 1.55; }
+    .card-actions { display: flex; gap: 8px; }
+
+    .replay-btn {
+      flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+      background: transparent; color: var(--muted);
+      font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.08em;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .replay-btn:hover { border-color: rgba(0,255,209,0.4); color: var(--cyan); background: rgba(0,255,209,0.05); }
+    .replay-btn svg { width: 11px; height: 11px; }
+
+    .code-btn {
+      flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+      background: transparent; color: var(--muted);
+      font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.08em;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .code-btn:hover { border-color: rgba(255,209,102,0.4); color: var(--gold); background: rgba(255,209,102,0.05); }
+    .code-btn svg { width: 11px; height: 11px; }
+
+    /* code drawer */
+    .code-drawer { display: none; padding: 0 16px 16px; }
+    .code-drawer.open { display: block; }
+    .code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; font-family: 'Space Mono', monospace; font-size: 0.72rem; line-height: 1.8; color: #a0a0b8; overflow-x: auto; }
     .code-block .kw { color: var(--magenta); }
     .code-block .fn { color: var(--cyan); }
     .code-block .str { color: var(--gold); }
     .code-block .cm { color: #444460; }
 
+    /* ── Preview element styles ── */
+
+    /* reveal */
+    .prev-reveal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+    .prev-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; }
+    .prev-card-dot { width: 24px; height: 24px; border-radius: 6px; background: var(--cyan); opacity: 0.7; margin-bottom: 8px; }
+    .prev-card-line { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.12); margin-bottom: 5px; }
+    .prev-card-line.short { width: 60%; }
+
+    /* counter */
+    .prev-counters { display: flex; gap: 16px; }
+    .prev-counter-item { text-align: center; }
+    .prev-counter-num { font-family: 'Syne', sans-serif; font-weight: 900; font-size: 2.4rem; color: var(--cyan); line-height: 1; }
+    .prev-counter-label { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+
+    /* progress */
+    .prev-steps { width: 100%; display: flex; flex-direction: column; gap: 0; }
+    .prev-step { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .prev-step:last-child { border-bottom: none; }
+    .prev-step-num-wrap { position: relative; font-family: 'Syne', sans-serif; font-weight: 900; font-size: 1.6rem; line-height: 1; user-select: none; flex-shrink: 0; }
+    .prev-step-ghost { color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.15); display: block; }
+    .prev-step-fill { position: absolute; inset: 0; color: var(--cyan); text-shadow: 0 0 16px rgba(0,255,209,0.5); clip-path: inset(0 100% 0 0); transition: clip-path 0.4s ease; }
+    .prev-step-text { font-size: 0.82rem; color: var(--muted); }
+
+    /* text reveal */
+    .prev-text-block { width: 100%; }
+    .prev-headline { font-family: 'Syne', sans-serif; font-weight: 900; font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1; margin-bottom: 10px; }
+    .prev-headline em { color: var(--cyan); font-style: normal; }
+    .prev-subtext { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+
+    /* stagger */
+    .prev-stagger-row { display: flex; gap: 10px; width: 100%; }
+    .prev-stagger-tile { flex: 1; background: linear-gradient(160deg, rgba(0,255,209,0.1), rgba(255,0,200,0.06)); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 14px 12px; }
+    .prev-stagger-num { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--gold); letter-spacing: 0.12em; margin-bottom: 8px; }
+    .prev-stagger-line { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); margin-bottom: 4px; }
+    .prev-stagger-line.short { width: 55%; }
+
+    /* blur reveal */
+    .prev-blur-panel { width: 100%; height: 180px; position: relative; background: radial-gradient(circle at 70% 20%, rgba(255,209,102,0.2), transparent 40%), radial-gradient(circle at 20% 60%, rgba(0,255,209,0.15), transparent 40%), linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden; display: flex; align-items: flex-end; padding: 18px; }
+    .prev-blur-orb { position: absolute; width: 100px; height: 100px; right: -20px; top: -30px; border-radius: 999px; background: linear-gradient(135deg, var(--cyan), var(--magenta)); filter: blur(20px); opacity: 0.3; }
+    .prev-blur-title { position: relative; font-family: 'Syne', sans-serif; font-weight: 900; font-size: 1.3rem; line-height: 1.1; }
+
+    /* zoom */
+    .prev-zoom-row { display: flex; gap: 10px; width: 100%; }
+    .prev-zoom-card { flex: 1; min-height: 120px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: flex-end; padding: 14px; }
+    .prev-zoom-card:first-child { background: radial-gradient(circle at 20% 20%, rgba(255,0,200,0.2), transparent 50%), rgba(255,255,255,0.03); }
+    .prev-zoom-card:last-child { background: radial-gradient(circle at 80% 20%, rgba(255,209,102,0.2), transparent 50%), rgba(255,255,255,0.03); }
+    .prev-zoom-num { font-family: 'Syne', sans-serif; font-weight: 900; font-size: 1.8rem; color: var(--cyan); line-height: 1; }
+
     /* footer */
-    footer { scroll-snap-align: start; text-align: center; padding: 80px 24px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.04); }
-    footer a { color: var(--cyan); text-decoration: none; }
+    .footer { text-align: center; padding: 48px 24px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--cyan); text-decoration: none; }
   </style>
 </head>
 <body>
-<div class="page-progress" id="page-scroll-progress"></div>
 
-<!-- Hero -->
-<div class="hero-wrap hero">
-  <div class="hero-inner">
-    <p class="hero-eyebrow js-reveal">scroll-craft v0.1</p>
-    <h1 class="js-reveal" style="--delay:80">Scroll<br/><em>animation</em><br/>that ships.</h1>
-    <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. Reveals, counters, progress fills, staggers, zooms, parallax, scenes, and text reveals — in TypeScript.</p>
-    <div class="badge-row js-reveal" style="--delay:240">
-      <span class="badge">0 dependencies</span>
-      <span class="badge">~4KB minified</span>
-      <span class="badge">TypeScript</span>
-      <span class="badge">Tree-shakeable</span>
-    </div>
+<nav class="nav">
+  <a class="nav-logo" href="#">scroll<span>craft</span></a>
+  <div class="nav-links">
+    <a href="https://github.com/Bilal-Studios/scroll-craft">GitHub</a>
+    <a href="https://www.npmjs.com/package/scroll-craft">npm</a>
   </div>
-  <div class="scroll-hint">scroll</div>
+  <a class="nav-npm" href="https://www.npmjs.com/package/scroll-craft">Install →</a>
+</nav>
+
+<div class="hero">
+  <p class="hero-kicker">scroll-craft v0.1</p>
+  <h1>Scroll animation<br/><em>that ships.</em></h1>
+  <p>Zero dependencies. ~4KB. IntersectionObserver-powered reveals, counters, progress fills, staggers, zooms, and text reveals — all in TypeScript.</p>
+  <div class="hero-row">
+    <div class="install-box">
+      <span>npm</span> install scroll-craft
+      <button class="copy-btn" id="copy-install" title="Copy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+    </div>
+    <span class="badge">0 dependencies</span>
+    <span class="badge">TypeScript</span>
+    <span class="badge">Tree-shakeable</span>
+  </div>
 </div>
 
-<!-- Reveal -->
-<section class="snap-section" id="s-reveal">
-  <div class="section-head">
-    <span class="label">Effect 01 — Reveal</span>
-    <button class="replay-btn" data-replay="reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
-  </div>
-  <h2>Reveal</h2>
-  <p class="desc">Elements animate into view as they enter the viewport. Configurable direction, distance, duration, and easing.</p>
-  <div class="reveal-grid" id="reveal-demo">
-    <div class="reveal-card" data-reveal-dir="left" data-delay="0">
-      <div class="card-icon">←</div>
-      <div class="card-title">From left</div>
-      <div class="card-text">Slides in from the left with an elastic finish.</div>
+<div class="filter-bar">
+  <button class="filter-btn active" data-filter="all">All</button>
+  <button class="filter-btn" data-filter="reveal">Reveal</button>
+  <button class="filter-btn" data-filter="counter">Counter</button>
+  <button class="filter-btn" data-filter="progress">Progress</button>
+  <button class="filter-btn" data-filter="text">Text</button>
+  <button class="filter-btn" data-filter="stagger">Stagger</button>
+  <button class="filter-btn" data-filter="blur">Blur</button>
+  <button class="filter-btn" data-filter="zoom">Zoom</button>
+</div>
+
+<div class="grid">
+
+  <!-- Reveal -->
+  <div class="effect-card" data-category="reveal">
+    <div class="preview" id="prev-reveal">
+      <div class="preview-inner">
+        <div class="prev-reveal-grid" id="reveal-els">
+          <div class="prev-card" data-dir="left"><div class="prev-card-dot"></div><div class="prev-card-line"></div><div class="prev-card-line short"></div></div>
+          <div class="prev-card" data-dir="up" data-delay="80"><div class="prev-card-dot" style="background:var(--magenta)"></div><div class="prev-card-line"></div><div class="prev-card-line short"></div></div>
+          <div class="prev-card" data-dir="right" data-delay="160"><div class="prev-card-dot" style="background:var(--gold)"></div><div class="prev-card-line"></div><div class="prev-card-line short"></div></div>
+          <div class="prev-card" data-dir="down" data-delay="240"><div class="prev-card-dot" style="background:var(--cyan);opacity:0.4"></div><div class="prev-card-line"></div><div class="prev-card-line short"></div></div>
+        </div>
+      </div>
     </div>
-    <div class="reveal-card" data-reveal-dir="up" data-delay="80">
-      <div class="card-icon">↑</div>
-      <div class="card-title">From bottom</div>
-      <div class="card-text">Default — enters from below with cubic easing.</div>
+    <div class="card-foot">
+      <div class="card-head-row"><span class="effect-name">Reveal</span><span class="effect-tag">Effect 01</span></div>
+      <p class="effect-desc">Animate elements into view from any direction with configurable easing, distance, and delay.</p>
+      <div class="card-actions">
+        <button class="replay-btn" data-replay="reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Replay</button>
+        <button class="code-btn" data-code="reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
+      </div>
     </div>
-    <div class="reveal-card" data-reveal-dir="right" data-delay="160">
-      <div class="card-icon">→</div>
-      <div class="card-title">From right</div>
-      <div class="card-text">Slides in from the right with an elastic finish.</div>
-    </div>
-    <div class="reveal-card" data-reveal-dir="down" data-delay="240">
-      <div class="card-icon">↓</div>
-      <div class="card-title">From top</div>
-      <div class="card-text">Falls down from above — good for nav items.</div>
-    </div>
-  </div>
-  <div class="code-block"><span class="kw">import</span> { <span class="fn">reveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+    <div class="code-drawer" id="code-reveal">
+      <div class="code-block"><span class="kw">import</span> { <span class="fn">reveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="fn">reveal</span>(<span class="str">'.card'</span>, {
-  direction: <span class="str">'left'</span>,
-  distance:  <span class="str">'40px'</span>,
-  duration:  800,
-  ease:      <span class="str">'elasticOut'</span>,
+  direction: <span class="str">'up'</span>,
+  distance:  <span class="str">'32px'</span>,
+  duration:  600,
+  ease:      <span class="str">'cubicOut'</span>,
+  delay:     0,
 })</div>
-</section>
+    </div>
+  </div>
 
-<!-- Counter -->
-<section class="snap-section" id="s-counter">
-  <div class="section-head">
-    <span class="label">Effect 02 — Counter</span>
-    <button class="replay-btn" data-replay="counter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
-  </div>
-  <h2>Counter</h2>
-  <p class="desc">Animate any numeric value from zero when it enters the viewport.</p>
-  <div class="counter-grid" id="counter-demo">
-    <div class="counter-cell"><div class="counter-value"><span data-count="94">0</span><span class="counter-suffix">%</span></div><div class="counter-label">client satisfaction</div></div>
-    <div class="counter-cell"><div class="counter-value"><span data-count="40">0</span><span class="counter-suffix">+</span></div><div class="counter-label">projects shipped</div></div>
-    <div class="counter-cell"><div class="counter-value"><span data-count="3">0</span><span class="counter-suffix">K</span></div><div class="counter-label">lines extracted</div></div>
-    <div class="counter-cell"><div class="counter-value"><span data-count="0">0</span></div><div class="counter-label">dependencies</div></div>
-  </div>
-  <div class="code-block"><span class="kw">import</span> { <span class="fn">counter</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+  <!-- Counter -->
+  <div class="effect-card" data-category="counter">
+    <div class="preview" id="prev-counter">
+      <div class="preview-inner">
+        <div class="prev-counters" id="counter-els">
+          <div class="prev-counter-item"><div class="prev-counter-num"><span data-count="94">0</span>%</div><div class="prev-counter-label">Satisfaction</div></div>
+          <div class="prev-counter-item"><div class="prev-counter-num"><span data-count="40">0</span>+</div><div class="prev-counter-label">Projects</div></div>
+          <div class="prev-counter-item"><div class="prev-counter-num"><span data-count="0">0</span></div><div class="prev-counter-label">Deps</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <div class="card-head-row"><span class="effect-name">Counter</span><span class="effect-tag">Effect 02</span></div>
+      <p class="effect-desc">Count from zero to any number when the element enters the viewport. Custom formatter support.</p>
+      <div class="card-actions">
+        <button class="replay-btn" data-replay="counter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Replay</button>
+        <button class="code-btn" data-code="counter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
+      </div>
+    </div>
+    <div class="code-drawer" id="code-counter">
+      <div class="code-block"><span class="kw">import</span> { <span class="fn">counter</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="fn">counter</span>(<span class="str">'[data-count]'</span>, {
   duration:  1400,
   ease:      <span class="str">'cubicOut'</span>,
   formatter: (n) => n.<span class="fn">toLocaleString</span>(<span class="str">'en-US'</span>),
 })</div>
-</section>
+    </div>
+  </div>
 
-<!-- Progress -->
-<section class="snap-section" id="s-progress">
-  <div class="section-head">
-    <span class="label">Effect 03 — Progress</span>
-    <button class="replay-btn" data-replay="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
-  </div>
-  <h2>Progress</h2>
-  <p class="desc">Numbers fill left-to-right as each step scrolls through the viewport.</p>
-  <div class="timeline" id="demo-timeline">
-    <div class="step"><span class="step-num-wrap"><span class="step-num-ghost">01</span><span class="sc-fill">01</span></span><div class="step-title">Extract</div><div class="step-text">Pull existing scroll logic out of your production code into a reusable module.</div></div>
-    <div class="step"><span class="step-num-wrap"><span class="step-num-ghost">02</span><span class="sc-fill">02</span></span><div class="step-title">Package</div><div class="step-text">Add TypeScript types, JSDoc, and a tsup build config for ESM + CJS output.</div></div>
-    <div class="step"><span class="step-num-wrap"><span class="step-num-ghost">03</span><span class="sc-fill">03</span></span><div class="step-title">Publish</div><div class="step-text">Push to npm. Drop into any project with one import — no stylesheet required.</div></div>
-    <div class="step"><span class="step-num-wrap"><span class="step-num-ghost">04</span><span class="sc-fill">04</span></span><div class="step-title">Embed</div><div class="step-text">Use as ESM import, CJS require, or a plain &lt;script&gt; tag on any page.</div></div>
-  </div>
-  <div class="code-block"><span class="kw">import</span> { <span class="fn">progress</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+  <!-- Progress -->
+  <div class="effect-card" data-category="progress">
+    <div class="preview" id="prev-progress">
+      <div class="preview-inner">
+        <div class="prev-steps" id="progress-els">
+          <div class="prev-step"><div class="prev-step-num-wrap"><span class="prev-step-ghost">01</span><span class="prev-step-fill">01</span></div><div class="prev-step-text">Extract your scroll logic</div></div>
+          <div class="prev-step"><div class="prev-step-num-wrap"><span class="prev-step-ghost">02</span><span class="prev-step-fill">02</span></div><div class="prev-step-text">Package with TypeScript</div></div>
+          <div class="prev-step"><div class="prev-step-num-wrap"><span class="prev-step-ghost">03</span><span class="prev-step-fill">03</span></div><div class="prev-step-text">Publish to npm</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <div class="card-head-row"><span class="effect-name">Progress</span><span class="effect-tag">Effect 03</span></div>
+      <p class="effect-desc">Fill child elements with clip-path as steps scroll through the viewport — or trigger on replay.</p>
+      <div class="card-actions">
+        <button class="replay-btn" data-replay="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Replay</button>
+        <button class="code-btn" data-code="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
+      </div>
+    </div>
+    <div class="code-drawer" id="code-progress">
+      <div class="code-block"><span class="kw">import</span> { <span class="fn">progress</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="fn">progress</span>(<span class="str">'#timeline .step'</span>, {
   start: 0.82,
   end:   0.2,
   fillSelector: <span class="str">'.sc-fill'</span>,
 })</div>
-</section>
+    </div>
+  </div>
 
-<!-- Text Reveal -->
-<section class="snap-section" id="s-text-reveal">
-  <div class="section-head">
-    <span class="label">Effect 04 — Text Reveal</span>
-    <button class="replay-btn" data-replay="text-reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
-  </div>
-  <h2>Text Reveal</h2>
-  <p class="desc">Split text into accessible word or letter spans and stagger each piece into view.</p>
-  <div class="text-reveal-showcase" id="text-reveal-demo">
-    <p class="text-reveal-line js-text-reveal">Words arrive with intent, <em>one beat at a time.</em></p>
-    <p class="text-reveal-note js-text-reveal-letters">Letters cascade too — while nested emphasis stays in the DOM instead of being flattened.</p>
-  </div>
-  <div class="code-block"><span class="kw">import</span> { <span class="fn">textReveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+  <!-- Text Reveal -->
+  <div class="effect-card" data-category="text">
+    <div class="preview" id="prev-text-reveal">
+      <div class="preview-inner">
+        <div class="prev-text-block" id="text-reveal-els">
+          <p class="prev-headline js-tr-words">Words arrive <em>one beat</em> at a time.</p>
+          <p class="prev-subtext js-tr-letters">Letters cascade with stagger.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <div class="card-head-row"><span class="effect-name">Text Reveal</span><span class="effect-tag">Effect 04</span></div>
+      <p class="effect-desc">Split text into word or letter spans and stagger each into view. Accessible — nested elements stay intact.</p>
+      <div class="card-actions">
+        <button class="replay-btn" data-replay="text-reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Replay</button>
+        <button class="code-btn" data-code="text-reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
+      </div>
+    </div>
+    <div class="code-drawer" id="code-text-reveal">
+      <div class="code-block"><span class="kw">import</span> { <span class="fn">textReveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="fn">textReveal</span>(<span class="str">'.headline'</span>, { type: <span class="str">'words'</span>, stagger: 40 })
 <span class="fn">textReveal</span>(<span class="str">'.eyebrow'</span>,  { type: <span class="str">'letters'</span>, stagger: 18 })</div>
-</section>
-
-<!-- Stagger -->
-<section class="snap-section" id="s-stagger">
-  <div class="section-head">
-    <span class="label">Effect 05 — Stagger</span>
-    <button class="replay-btn" data-replay="stagger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
+    </div>
   </div>
-  <h2>Stagger</h2>
-  <p class="desc">Observe a parent, reveal its children one after another with a configurable delay.</p>
-  <div class="stagger-board" id="stagger-demo">
-    <article class="stagger-tile"><p class="stagger-kicker">01</p><h3 class="stagger-title">Resolve once</h3><p class="stagger-copy">Children are selected before observing, so layout is never measured during frames.</p></article>
-    <article class="stagger-tile"><p class="stagger-kicker">02</p><h3 class="stagger-title">Sequence cleanly</h3><p class="stagger-copy">Each child starts after the configured delay, creating a cascading reveal.</p></article>
-    <article class="stagger-tile"><p class="stagger-kicker">03</p><h3 class="stagger-title">Clean up</h3><p class="stagger-copy">Returns a cleanup function, tracked through destroy() on the class API.</p></article>
-  </div>
-  <div class="code-block"><span class="kw">import</span> { <span class="fn">stagger</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
-<span class="fn">stagger</span>(<span class="str">'.feature-grid'</span>, {
+  <!-- Stagger -->
+  <div class="effect-card" data-category="stagger">
+    <div class="preview" id="prev-stagger">
+      <div class="preview-inner">
+        <div class="prev-stagger-row" id="stagger-els">
+          <div class="prev-stagger-tile"><div class="prev-stagger-num">01</div><div class="prev-stagger-line"></div><div class="prev-stagger-line short"></div></div>
+          <div class="prev-stagger-tile"><div class="prev-stagger-num">02</div><div class="prev-stagger-line"></div><div class="prev-stagger-line short"></div></div>
+          <div class="prev-stagger-tile"><div class="prev-stagger-num">03</div><div class="prev-stagger-line"></div><div class="prev-stagger-line short"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <div class="card-head-row"><span class="effect-name">Stagger</span><span class="effect-tag">Effect 05</span></div>
+      <p class="effect-desc">Observe a parent and cascade its children into view one after another with a configurable delay.</p>
+      <div class="card-actions">
+        <button class="replay-btn" data-replay="stagger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Replay</button>
+        <button class="code-btn" data-code="stagger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
+      </div>
+    </div>
+    <div class="code-drawer" id="code-stagger">
+      <div class="code-block"><span class="kw">import</span> { <span class="fn">stagger</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">stagger</span>(<span class="str">'.grid'</span>, {
   children:  <span class="str">'.card'</span>,
   direction: <span class="str">'up'</span>,
   stagger:   80,
   duration:  600,
 })</div>
-</section>
+    </div>
+  </div>
 
-<!-- Blur Reveal -->
-<section class="snap-section" id="s-blur-reveal">
-  <div class="section-head">
-    <span class="label">Effect 06 — Blur Reveal</span>
-    <button class="replay-btn" data-replay="blur-reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
-  </div>
-  <h2>Blur Reveal</h2>
-  <p class="desc">Fade, de-blur, and lift elements into place as they enter the viewport.</p>
-  <div class="blur-panel" id="blur-reveal-demo">
-    <div class="blur-orb"></div>
-    <h3 class="blur-title">Soft focus on arrival.</h3>
-    <p class="blur-copy">Use blurReveal for hero panels, editorial blocks, or product shots that should resolve from atmosphere into clarity.</p>
-  </div>
-  <div class="code-block"><span class="kw">import</span> { <span class="fn">blurReveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+  <!-- Blur Reveal -->
+  <div class="effect-card" data-category="blur">
+    <div class="preview" id="prev-blur">
+      <div class="preview-inner" style="padding:16px">
+        <div class="prev-blur-panel" id="blur-el">
+          <div class="prev-blur-orb"></div>
+          <div class="prev-blur-title">Soft focus<br/>on arrival.</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <div class="card-head-row"><span class="effect-name">Blur Reveal</span><span class="effect-tag">Effect 06</span></div>
+      <p class="effect-desc">Fade, de-blur, and lift elements into clarity as they enter the viewport. Great for hero panels.</p>
+      <div class="card-actions">
+        <button class="replay-btn" data-replay="blur-reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Replay</button>
+        <button class="code-btn" data-code="blur-reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
+      </div>
+    </div>
+    <div class="code-drawer" id="code-blur-reveal">
+      <div class="code-block"><span class="kw">import</span> { <span class="fn">blurReveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="fn">blurReveal</span>(<span class="str">'.panel'</span>, {
   blur:     <span class="str">'12px'</span>,
   distance: <span class="str">'16px'</span>,
   duration: 700,
 })</div>
-</section>
-
-<!-- Zoom -->
-<section class="snap-section" id="s-zoom">
-  <div class="section-head">
-    <span class="label">Effect 07 — Zoom</span>
-    <button class="replay-btn" data-replay="zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
+    </div>
   </div>
-  <h2>Zoom</h2>
-  <p class="desc">Scale elements from a smaller starting point while fading them into view.</p>
-  <div class="zoom-stage" id="zoom-demo">
-    <article class="zoom-card"><div class="zoom-number">01</div><h3 class="zoom-title">Composited scale</h3><p class="zoom-copy">Opacity and transform stay on the compositor path for smooth card and media reveals.</p></article>
-    <article class="zoom-card zoom-card--alt"><div class="zoom-number">02</div><h3 class="zoom-title">Centered origin</h3><p class="zoom-copy">Sets transform-origin to center while running, then restores styles on cleanup.</p></article>
-  </div>
-  <div class="code-block"><span class="kw">import</span> { <span class="fn">zoom</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
-<span class="fn">zoom</span>(<span class="str">'.product-card'</span>, {
-  from:     0.94,
+  <!-- Zoom -->
+  <div class="effect-card" data-category="zoom">
+    <div class="preview" id="prev-zoom">
+      <div class="preview-inner">
+        <div class="prev-zoom-row" id="zoom-els">
+          <div class="prev-zoom-card"><div class="prev-zoom-num">01</div></div>
+          <div class="prev-zoom-card"><div class="prev-zoom-num">02</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <div class="card-head-row"><span class="effect-name">Zoom</span><span class="effect-tag">Effect 07</span></div>
+      <p class="effect-desc">Scale elements from a smaller starting point while fading them in. Stays on the compositor path.</p>
+      <div class="card-actions">
+        <button class="replay-btn" data-replay="zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Replay</button>
+        <button class="code-btn" data-code="zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
+      </div>
+    </div>
+    <div class="code-drawer" id="code-zoom">
+      <div class="code-block"><span class="kw">import</span> { <span class="fn">zoom</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">zoom</span>(<span class="str">'.card'</span>, {
+  from:     0.92,
   duration: 600,
   ease:     <span class="str">'cubicOut'</span>,
 })</div>
-</section>
-
-<!-- Parallax -->
-<section class="snap-section" id="s-parallax">
-  <div class="section-head">
-    <span class="label">Effect 08 — Parallax</span>
-    <button class="replay-btn" data-replay="parallax"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
-  </div>
-  <h2>Parallax</h2>
-  <p class="desc">Move decorative layers from scroll position using requestAnimationFrame and compositor-friendly translate3d transforms.</p>
-  <div class="parallax-scene" id="parallax-demo">
-    <div class="parallax-grid"></div>
-    <div class="parallax-layer parallax-layer--one js-parallax-y">Y</div>
-    <div class="parallax-layer parallax-layer--two js-parallax-x">X</div>
-    <p class="parallax-caption">Scroll through this panel: the cyan layer moves vertically while the magenta layer drifts horizontally.</p>
-  </div>
-  <div class="code-block"><span class="kw">import</span> { <span class="fn">parallax</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
-
-<span class="fn">parallax</span>(<span class="str">'.decor-layer'</span>, {
-  speed:   0.25,
-  axis:    <span class="str">'y'</span>,
-  clamp:   120,
-})</div>
-</section>
-
-<!-- Scroll Progress -->
-<section class="snap-section" id="s-scroll-progress">
-  <div class="section-head">
-    <span class="label">Effect 09 — Scroll Progress</span>
-    <button class="replay-btn" data-replay="scroll-progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>UPDATE</button>
-  </div>
-  <h2>Scroll Progress</h2>
-  <p class="desc">Represent page or container scroll progress as scale, width, or height from 0 to 1.</p>
-  <div class="scroll-progress-demo">
-    <div class="progress-meter">
-      <div class="progress-meter__value" id="scroll-progress-value">0%</div>
-      <p class="progress-meter__text">The fixed bar at the top of the page and this rail both track document scroll using width percentages.</p>
-    </div>
-    <div class="progress-rail"><div class="progress-rail__fill" id="scroll-progress-rail"></div></div>
-  </div>
-  <div class="code-block"><span class="kw">import</span> { <span class="fn">scrollProgress</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
-
-<span class="fn">scrollProgress</span>(<span class="str">'.page-progress'</span>, {
-  axis:     <span class="str">'y'</span>,
-  property: <span class="str">'width'</span>,
-})</div>
-</section>
-
-<!-- Scene -->
-<section class="snap-section" id="s-scene">
-  <div class="section-head">
-    <span class="label">Effect 10 — Scene</span>
-    <button class="replay-btn" data-replay="scene"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>UPDATE</button>
-  </div>
-  <h2>Scene</h2>
-  <p class="desc">Scrub a section timeline from progress 0 to 1 as the section top travels through the viewport.</p>
-  <div class="scene-stage story-scene" id="scene-demo">
-    <div class="scene-copy">
-      <h3 class="scene-title">Scroll-driven story beats.</h3>
-      <p class="scene-card">The title fades in, the image slides upward, and this card rotates into alignment from the same section progress value.</p>
-    </div>
-    <div class="scene-visual">
-      <div class="scene-image">SC</div>
     </div>
   </div>
-  <div class="code-block"><span class="kw">import</span> { <span class="fn">scene</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
-<span class="fn">scene</span>(<span class="str">'.story'</span>, [
-  { target: <span class="str">'.title'</span>, start: 0,   end: 0.3, from: { opacity: 0 }, to: { opacity: 1 } },
-  { target: <span class="str">'.image'</span>, start: 0.2, end: 0.7, from: { y: 80 }, to: { y: 0 } },
-  { target: <span class="str">'.card'</span>,  start: 0.5, end: 1,   from: { rotate: -8 }, to: { rotate: 0 } },
-])</div>
-</section>
+</div><!-- /grid -->
 
-<footer>
+<footer class="footer">
   <p>Built by <a href="https://bilalstudio.io">Bilal Studio</a> · <a href="https://github.com/Bilal-Studios/scroll-craft">GitHub</a> · <a href="https://npmjs.com/package/scroll-craft">npm</a></p>
 </footer>
 
 <script type="module">
   // ── Easing
-  const easeFns = {
-    cubicOut:   t => 1 - (1 - t) ** 3,
-    elasticOut: t => t === 0 || t === 1 ? t : 2 ** (-10 * t) * Math.sin((t * 10 - 0.75) * (2 * Math.PI / 3)) + 1,
-    backOut:    t => { const c = 2.70158; return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2 },
+  const E = {
+    cubicOut:   t => 1 - (1-t)**3,
+    elasticOut: t => t===0||t===1 ? t : 2**(-10*t)*Math.sin((t*10-0.75)*(2*Math.PI/3))+1,
+    backOut:    t => { const c=2.70158; return 1+(c+1)*(t-1)**3+c*(t-1)**2 },
   }
 
-  // ── Direct animators (no observer — called by init and replay)
+  // ── Core animators
 
-  function animateEl(el, { delay = 0, direction = 'up', distance = '24px', duration = 600, easeFn = easeFns.cubicOut } = {}) {
-    const dist = parseFloat(distance), unit = distance.replace(/[\d.-]/g, '') || 'px'
-    el.style.opacity = '0'
-    el.style.willChange = 'opacity, transform'
-    const start = performance.now() + delay
-    ;(function step(now) {
-      if (now < start) { requestAnimationFrame(step); return }
-      const p = Math.min(1, (now - start) / duration), e = easeFn(p)
-      el.style.opacity = e
-      el.style.transform = direction === 'left'  ? `translateX(${dist*(1-e)}${unit})`
-                         : direction === 'right' ? `translateX(${-dist*(1-e)}${unit})`
-                         : direction === 'down'  ? `translateY(${-dist*(1-e)}${unit})`
-                         :                         `translateY(${dist*(1-e)}${unit})`
-      if (p < 1) requestAnimationFrame(step)
-      else { el.style.opacity='1'; el.style.transform='none'; el.style.willChange='auto' }
+  function animEl(el, { delay=0, dir='up', dist='28px', dur=550, ease=E.cubicOut }={}) {
+    const dv=parseFloat(dist), du=dist.replace(/[\d.-]/g,'')||'px'
+    el.style.cssText += `;opacity:0;will-change:opacity,transform`
+    const s=performance.now()+delay
+    ;(function f(n){
+      if(n<s){requestAnimationFrame(f);return}
+      const p=Math.min(1,(n-s)/dur),e=ease(p)
+      el.style.opacity=e
+      el.style.transform=dir==='left'?`translateX(${dv*(1-e)}${du})`:dir==='right'?`translateX(${-dv*(1-e)}${du})`:dir==='down'?`translateY(${-dv*(1-e)}${du})`:`translateY(${dv*(1-e)}${du})`
+      if(p<1)requestAnimationFrame(f)
+      else{el.style.opacity='1';el.style.transform='none';el.style.willChange='auto'}
     })(performance.now())
   }
 
-  function animateCount(el, duration = 1400) {
-    const target = Number(el.dataset.count || 0)
-    el.textContent = '0'
-    const start = performance.now()
-    ;(function step(now) {
-      const p = Math.min(1, (now - start) / duration)
-      el.textContent = Math.round(target * easeFns.cubicOut(p)).toLocaleString('en-US')
-      if (p < 1) requestAnimationFrame(step)
+  function animCount(el, dur=1200) {
+    const target=Number(el.dataset.count||0)
+    el.textContent='0'
+    const s=performance.now()
+    ;(function f(n){
+      const p=Math.min(1,(n-s)/dur)
+      el.textContent=Math.round(target*E.cubicOut(p)).toLocaleString('en-US')
+      if(p<1)requestAnimationFrame(f)
     })(performance.now())
   }
 
-  function animateBlur(el, { blur = '12px', distance = '16px', duration = 700 } = {}) {
-    const bv = parseFloat(blur), bu = blur.replace(/[\d.-]/g,'')||'px'
-    const dv = parseFloat(distance), du = distance.replace(/[\d.-]/g,'')||'px'
-    el.style.cssText += `;opacity:0;filter:blur(${blur});transform:translateY(${distance});will-change:opacity,filter,transform`
-    const start = performance.now()
-    ;(function step(now) {
-      const p = Math.min(1, (now - start) / duration), e = easeFns.cubicOut(p)
-      el.style.opacity = e
-      el.style.filter = `blur(${bv*(1-e)}${bu})`
-      el.style.transform = `translateY(${dv*(1-e)}${du})`
-      if (p < 1) requestAnimationFrame(step)
-      else { el.style.opacity='1'; el.style.filter='none'; el.style.transform='none'; el.style.willChange='auto' }
+  function animBlur(el,{blur='12px',dist='14px',dur=700}={}) {
+    const bv=parseFloat(blur),bu=blur.replace(/[\d.-]/g,'')||'px'
+    const dv=parseFloat(dist),du=dist.replace(/[\d.-]/g,'')||'px'
+    el.style.cssText+=`;opacity:0;filter:blur(${blur});transform:translateY(${dist});will-change:opacity,filter,transform`
+    const s=performance.now()
+    ;(function f(n){
+      const p=Math.min(1,(n-s)/dur),e=E.cubicOut(p)
+      el.style.opacity=e;el.style.filter=`blur(${bv*(1-e)}${bu})`;el.style.transform=`translateY(${dv*(1-e)}${du})`
+      if(p<1)requestAnimationFrame(f)
+      else{el.style.opacity='1';el.style.filter='none';el.style.transform='none';el.style.willChange='auto'}
     })(performance.now())
   }
 
-  function animateZoomEl(el, { from = 0.94, duration = 600, delay = 0 } = {}) {
-    el.style.opacity = '0'; el.style.transform = `scale(${from})`; el.style.transformOrigin = 'center'; el.style.willChange = 'opacity,transform'
-    const start = performance.now() + delay
-    ;(function step(now) {
-      if (now < start) { requestAnimationFrame(step); return }
-      const p = Math.min(1, (now - start) / duration), e = easeFns.cubicOut(p)
-      el.style.opacity = e; el.style.transform = `scale(${from + (1-from)*e})`
-      if (p < 1) requestAnimationFrame(step)
-      else { el.style.opacity='1'; el.style.transform='scale(1)'; el.style.willChange='auto' }
+  function animZoom(el,{from=0.92,dur=550,delay=0}={}) {
+    el.style.cssText+=`;opacity:0;transform:scale(${from});transform-origin:center;will-change:opacity,transform`
+    const s=performance.now()+delay
+    ;(function f(n){
+      if(n<s){requestAnimationFrame(f);return}
+      const p=Math.min(1,(n-s)/dur),e=E.cubicOut(p)
+      el.style.opacity=e;el.style.transform=`scale(${from+(1-from)*e})`
+      if(p<1)requestAnimationFrame(f)
+      else{el.style.opacity='1';el.style.transform='scale(1)';el.style.willChange='auto'}
     })(performance.now())
   }
 
-  const parallaxCleanups = []
-
-  function createParallax(selector, { speed = 0.25, axis = 'y', reverse = false, clamp = 120, rootMargin = '0px' } = {}) {
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const elements = [...document.querySelectorAll(selector)]
-    const states = elements.map(el => ({
-      el,
-      originalTransform: el.style.transform,
-      originalWillChange: el.style.willChange,
-      rect: null,
-      visible: false,
-    }))
-    let frame = 0
-
-    if (reduceMotion.matches || !states.length) return () => {}
-
-    function read() {
-      states.forEach(state => {
-        state.rect = state.el.getBoundingClientRect()
-      })
-    }
-
-    function write() {
-      const mid = window.innerHeight / 2
-      states.forEach(state => {
-        if (!state.visible || !state.rect) return
-        const elementMid = state.rect.top + state.rect.height / 2
-        const raw = (mid - elementMid) * speed * (reverse ? -1 : 1)
-        const amount = Math.max(-clamp, Math.min(clamp, raw))
-        state.el.style.transform = axis === 'x'
-          ? `translate3d(${amount.toFixed(2)}px, 0, 0)`
-          : `translate3d(0, ${amount.toFixed(2)}px, 0)`
-      })
-      frame = 0
-    }
-
-    function update() {
-      if (frame) return
-      frame = requestAnimationFrame(() => {
-        read()
-        write()
-      })
-    }
-
-    states.forEach(state => { state.el.style.willChange = 'transform' })
-
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        const state = states.find(item => item.el === entry.target)
-        if (!state) return
-        state.visible = entry.isIntersecting
-      })
-      update()
-    }, { rootMargin })
-
-    states.forEach(state => observer.observe(state.el))
-    window.addEventListener('scroll', update, { passive: true })
-    window.addEventListener('resize', update)
-    update()
-
-    return () => {
-      if (frame) cancelAnimationFrame(frame)
-      observer.disconnect()
-      window.removeEventListener('scroll', update)
-      window.removeEventListener('resize', update)
-      states.forEach(state => {
-        state.el.style.transform = state.originalTransform
-        state.el.style.willChange = state.originalWillChange
-      })
-    }
-  }
-
-  function restartParallax() {
-    while (parallaxCleanups.length) parallaxCleanups.pop()()
-    parallaxCleanups.push(
-      createParallax('.js-parallax-y', { speed: 0.34, clamp: 150, rootMargin: '20% 0px' }),
-      createParallax('.js-parallax-x', { axis: 'x', reverse: true, speed: 0.26, clamp: 110, rootMargin: '20% 0px' }),
-    )
-  }
-
-  function createScrollProgress(targets, { axis = 'x', property = 'scale', container = window, onUpdate } = {}) {
-    const elements = [...document.querySelectorAll(targets)]
-    let frame = 0
-
-    function readProgress() {
-      if (container === window) {
-        const root = document.documentElement
-        const max = axis === 'x'
-          ? root.scrollWidth - window.innerWidth
-          : root.scrollHeight - window.innerHeight
-        const current = axis === 'x' ? window.scrollX : window.scrollY
-        return max <= 0 ? 1 : Math.min(1, Math.max(0, current / max))
-      }
-
-      const max = axis === 'x'
-        ? container.scrollWidth - container.clientWidth
-        : container.scrollHeight - container.clientHeight
-      const current = axis === 'x' ? container.scrollLeft : container.scrollTop
-      return max <= 0 ? 1 : Math.min(1, Math.max(0, current / max))
-    }
-
-    function write() {
-      frame = 0
-      const progress = readProgress()
-      elements.forEach(el => {
-        if (property === 'scale') {
-          el.style.transform = axis === 'x' ? `scaleX(${progress})` : `scaleY(${progress})`
-          el.style.transformOrigin = axis === 'x' ? 'left center' : 'center top'
-        } else if (property === 'width') {
-          el.style.width = `${progress * 100}%`
-        } else {
-          el.style.height = `${progress * 100}%`
-        }
-      })
-      onUpdate?.(progress)
-    }
-
-    function schedule() {
-      if (frame) return
-      frame = requestAnimationFrame(write)
-    }
-
-    container.addEventListener('scroll', schedule, { passive: true })
-    window.addEventListener('resize', schedule)
-    schedule()
-
-    return () => {
-      if (frame) cancelAnimationFrame(frame)
-      container.removeEventListener('scroll', schedule)
-      window.removeEventListener('resize', schedule)
-    }
-  }
-
-  let stopPageProgress = () => {}
-
-  function restartScrollProgress() {
-    stopPageProgress()
-    stopPageProgress = createScrollProgress('#page-scroll-progress, #scroll-progress-rail', {
-      axis: 'y',
-      property: 'width',
-      onUpdate(progress) {
-        document.querySelector('#scroll-progress-value').textContent = `${Math.round(progress * 100)}%`
-      },
-    })
-  }
-
-  restartScrollProgress()
-
-  function createScene(sectionSelector, steps, { start = 0.9, end = 0.1, easeFn = easeFns.cubicOut } = {}) {
-    const sections = [...document.querySelectorAll(sectionSelector)]
-    const states = sections.map(section => ({
-      section,
-      visible: true,
-      top: 0,
-      steps: steps.flatMap(step => [...section.querySelectorAll(step.target)].map(el => ({
-        el,
-        from: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, ...step.from },
-        to: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, ...step.to },
-        start: step.start ?? 0,
-        end: step.end ?? 1,
-        easeFn: step.easeFn || easeFn,
-      }))),
-    })).filter(state => state.steps.length)
-    let frame = 0
-
-    function progressForTop(top) {
-      const startPx = window.innerHeight * start
-      const endPx = window.innerHeight * end
-      return Math.min(1, Math.max(0, (startPx - top) / (startPx - endPx)))
-    }
-
-    function mix(a, b, p) {
-      return a + (b - a) * p
-    }
-
-    function localProgress(step, progress) {
-      if (step.start === step.end) return progress >= step.end ? 1 : 0
-      return Math.min(1, Math.max(0, (progress - step.start) / (step.end - step.start)))
-    }
-
-    function writeStep(step, progress) {
-      const p = step.easeFn(localProgress(step, progress))
-      const opacity = mix(step.from.opacity, step.to.opacity, p)
-      const x = mix(step.from.x, step.to.x, p)
-      const y = mix(step.from.y, step.to.y, p)
-      const scale = mix(step.from.scale, step.to.scale, p)
-      const rotate = mix(step.from.rotate, step.to.rotate, p)
-      step.el.style.opacity = opacity
-      step.el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale}) rotate(${rotate}deg)`
-      step.el.style.willChange = 'opacity, transform'
-    }
-
-    function update() {
-      frame = 0
-      states.forEach(state => {
-        const rect = state.section.getBoundingClientRect()
-        state.top = rect.top
-        const progress = progressForTop(state.top)
-        if (!(state.visible || progress === 0 || progress === 1)) return
-        state.steps.forEach(step => writeStep(step, progress))
-      })
-    }
-
-    function schedule() {
-      if (frame) return
-      frame = requestAnimationFrame(update)
-    }
-
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        const state = states.find(item => item.section === entry.target)
-        if (state) state.visible = entry.isIntersecting
-      })
-      schedule()
-    })
-    states.forEach(state => observer.observe(state.section))
-    window.addEventListener('scroll', schedule, { passive: true })
-    window.addEventListener('resize', schedule)
-    schedule()
-
-    return () => {
-      if (frame) cancelAnimationFrame(frame)
-      observer.disconnect()
-      window.removeEventListener('scroll', schedule)
-      window.removeEventListener('resize', schedule)
-    }
-  }
-
-  let stopScene = () => {}
-
-  function restartScene() {
-    stopScene()
-    stopScene = createScene('#scene-demo', [
-      { target: '.scene-title', start: 0, end: 0.3, from: { opacity: 0, y: 32 }, to: { opacity: 1, y: 0 } },
-      { target: '.scene-image', start: 0.2, end: 0.7, from: { y: 80, scale: 0.92 }, to: { y: 0, scale: 1 } },
-      { target: '.scene-card', start: 0.5, end: 1, from: { opacity: 0.25, x: -20, rotate: -8 }, to: { opacity: 1, x: 0, rotate: 0 } },
-    ])
-  }
-
-  restartScene()
-
-  // ── Text reveal split + animate
+  // ── Text split
   const trStates = new Map()
-
   function splitText(el, type) {
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
-      acceptNode: n => /\S/.test(n.textContent||'') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
-    })
-    const nodes = []; let cur = walker.nextNode()
-    while (cur) { nodes.push(cur); cur = walker.nextNode() }
-    const spans = []
-    nodes.forEach(tn => {
-      const parts = type === 'letters' ? [...tn.data] : tn.data.match(/\S+|\s+/g)||[]
-      const frag = document.createDocumentFragment()
-      parts.forEach(part => {
-        if (/\s/.test(part)) { frag.appendChild(document.createTextNode(part)); return }
-        const s = document.createElement('span')
-        s.textContent = part; s.style.cssText = 'display:inline-block;opacity:0;transform:translateY(0.75em);will-change:opacity,transform'
-        frag.appendChild(s); spans.push(s)
+    const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,{acceptNode:n=>/\S/.test(n.textContent)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT})
+    const nodes=[]; let c=w.nextNode(); while(c){nodes.push(c);c=w.nextNode()}
+    const spans=[]
+    nodes.forEach(tn=>{
+      const parts=type==='letters'?[...tn.data]:tn.data.match(/\S+|\s+/g)||[]
+      const frag=document.createDocumentFragment()
+      parts.forEach(pt=>{
+        if(/\s/.test(pt)){frag.appendChild(document.createTextNode(pt));return}
+        const s=document.createElement('span')
+        s.textContent=pt;s.style.cssText='display:inline-block;opacity:0;transform:translateY(0.6em);will-change:opacity,transform'
+        frag.appendChild(s);spans.push(s)
       })
-      tn.parentNode.replaceChild(frag, tn)
+      tn.parentNode.replaceChild(frag,tn)
     })
     return spans
   }
-
-  function runTextReveal(spans, { stagger = 40, duration = 600 } = {}) {
-    spans.forEach((span, i) => {
-      span.style.opacity = '0'; span.style.transform = 'translateY(0.75em)'
-      const start = performance.now() + i * stagger
-      ;(function step(now) {
-        if (now < start) { requestAnimationFrame(step); return }
-        const p = Math.min(1,(now-start)/duration), e = easeFns.cubicOut(p)
-        span.style.opacity = e; span.style.transform = `translateY(${(1-e)*.75}em)`
-        if (p < 1) requestAnimationFrame(step)
-        else { span.style.opacity='1'; span.style.transform='none'; span.style.willChange='auto' }
+  function runTextReveal(spans,{stagger=40,dur=550}={}) {
+    spans.forEach((s,i)=>{
+      s.style.opacity='0';s.style.transform='translateY(0.6em)'
+      const start=performance.now()+i*stagger
+      ;(function f(n){
+        if(n<start){requestAnimationFrame(f);return}
+        const p=Math.min(1,(n-start)/dur),e=E.cubicOut(p)
+        s.style.opacity=e;s.style.transform=`translateY(${(1-e)*.6}em)`
+        if(p<1)requestAnimationFrame(f)
+        else{s.style.opacity='1';s.style.transform='none';s.style.willChange='auto'}
       })(performance.now())
     })
   }
 
-  // ── Progress scroll handler
-  function updateProgress() {
-    const winH = window.innerHeight
-    document.querySelectorAll('#demo-timeline .step').forEach(step => {
-      const fill = step.querySelector('.sc-fill'); if (!fill) return
-      const rect = step.getBoundingClientRect()
-      const prog = Math.min(1, Math.max(0, (winH * 0.82 - rect.top) / (winH * 0.62)))
-      fill.style.clipPath = `inset(0 ${Math.round((1-prog)*100)}% 0 0)`
+  // ── Progress sequential (for card preview)
+  function animProgress(fills) {
+    fills.forEach((fill,i)=>{
+      fill.style.transition='none'
+      fill.style.clipPath='inset(0 100% 0 0)'
+      setTimeout(()=>{
+        fill.style.transition='clip-path 0.5s cubic-bezier(0.25,0,0,1)'
+        fill.style.clipPath='inset(0 0% 0 0)'
+      }, 200 + i*400)
     })
   }
-  window.addEventListener('scroll', updateProgress, { passive: true })
 
-  // ── Init with IntersectionObserver for scroll trigger
-
-  function observe(selector, fn, opts = {}) {
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (!e.isIntersecting) return; fn(e.target); obs.unobserve(e.target) })
-    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px', ...opts })
-    document.querySelectorAll(selector).forEach(el => obs.observe(el))
+  // ── Init animations on intersection
+  function observe(el, fn) {
+    if (!el) return
+    const obs = new IntersectionObserver(entries=>{
+      if (!entries[0].isIntersecting) return
+      fn(); obs.disconnect()
+    },{threshold:0.3})
+    obs.observe(el)
   }
 
-  // Hero
-  observe('.js-reveal', el => animateEl(el, { delay: Number(el.style.getPropertyValue('--delay'))||0 }))
-
-  // Reveal cards — animate immediately on load since they're above fold or close
-  document.querySelectorAll('#reveal-demo .reveal-card').forEach(el => {
-    const dir = el.dataset.revealDir || 'up'
-    const delay = Number(el.dataset.delay) || 0
-    const efn = (dir==='left'||dir==='right') ? easeFns.elasticOut : dir==='down' ? easeFns.backOut : easeFns.cubicOut
-    el.style.opacity = '0'
-    observe(`#reveal-demo [data-reveal-dir="${dir}"]`, target => animateEl(target, { delay, direction: dir, distance: '32px', easeFn: efn }))
+  // Reveal
+  const revealEls = document.querySelectorAll('#reveal-els .prev-card')
+  revealEls.forEach(el=>el.style.opacity='0')
+  observe(document.getElementById('prev-reveal'), ()=>{
+    revealEls.forEach(el=>{
+      const dir=el.dataset.dir||'up', delay=Number(el.dataset.delay)||0
+      const ease=(dir==='left'||dir==='right')?E.elasticOut:dir==='down'?E.backOut:E.cubicOut
+      animEl(el,{delay,dir,ease})
+    })
   })
 
   // Counter
-  observe('[data-count]', el => animateCount(el), { threshold: 0.45 })
-
-  // Text reveal — split on load, animate on scroll
-  document.querySelectorAll('.js-text-reveal').forEach(el => {
-    const spans = splitText(el, 'words')
-    trStates.set(el, { spans, opts: { stagger: 40 } })
-  })
-  document.querySelectorAll('.js-text-reveal-letters').forEach(el => {
-    const spans = splitText(el, 'letters')
-    trStates.set(el, { spans, opts: { stagger: 18 } })
-  })
-  trStates.forEach(({ spans, opts }, el) => {
-    observe(`#${el.closest('[id]')?.id} .js-text-reveal, #${el.closest('[id]')?.id} .js-text-reveal-letters`, () => runTextReveal(spans, opts))
-    // simpler: observe the element itself
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (!e.isIntersecting) return; runTextReveal(spans, opts); obs.unobserve(e.target) })
-    }, { threshold: 0.12 })
-    obs.observe(el)
+  observe(document.getElementById('prev-counter'), ()=>{
+    document.querySelectorAll('#counter-els [data-count]').forEach(el=>animCount(el))
   })
 
-  // Stagger tiles
-  document.querySelectorAll('#stagger-demo .stagger-tile').forEach(el => { el.style.opacity='0'; el.style.transform='translateY(24px)' })
-  observe('#stagger-demo', el => el.querySelectorAll('.stagger-tile').forEach((t,i) => animateEl(t, { delay: i*80 })))
+  // Progress
+  const progressFills = document.querySelectorAll('#progress-els .prev-step-fill')
+  observe(document.getElementById('prev-progress'), ()=>animProgress([...progressFills]))
+
+  // Text reveal
+  const trWords = document.querySelector('.js-tr-words')
+  const trLetters = document.querySelector('.js-tr-letters')
+  if (trWords) { const spans=splitText(trWords,'words'); trStates.set('words',spans) }
+  if (trLetters) { const spans=splitText(trLetters,'letters'); trStates.set('letters',spans) }
+  observe(document.getElementById('prev-text-reveal'), ()=>{
+    trStates.forEach((spans,k)=>runTextReveal(spans,{stagger:k==='letters'?18:40}))
+  })
+
+  // Stagger
+  const staggerEls = document.querySelectorAll('#stagger-els .prev-stagger-tile')
+  staggerEls.forEach(el=>el.style.opacity='0')
+  observe(document.getElementById('prev-stagger'), ()=>{
+    staggerEls.forEach((el,i)=>animEl(el,{delay:i*100}))
+  })
 
   // Blur reveal
-  observe('#blur-reveal-demo', el => animateBlur(el))
+  observe(document.getElementById('prev-blur'), ()=>animBlur(document.getElementById('blur-el')))
 
   // Zoom
-  document.querySelectorAll('#zoom-demo .zoom-card').forEach((el,i) => {
-    el.style.opacity='0'; el.style.transform='scale(0.94)'
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (!e.isIntersecting) return; animateZoomEl(e.target, { delay: i*120 }); obs.unobserve(e.target) })
-    }, { threshold: 0.2 })
-    obs.observe(el)
+  const zoomEls = document.querySelectorAll('#zoom-els .prev-zoom-card')
+  zoomEls.forEach(el=>el.style.opacity='0')
+  observe(document.getElementById('prev-zoom'), ()=>{
+    zoomEls.forEach((el,i)=>animZoom(el,{delay:i*120}))
   })
 
-  // Parallax
-  restartParallax()
-
-  updateProgress()
-
-  // ── Replay handlers
-
+  // ── Replay
   const replays = {
     reveal() {
-      document.querySelectorAll('#reveal-demo .reveal-card').forEach(el => {
-        const dir = el.dataset.revealDir||'up', delay = Number(el.dataset.delay)||0
-        const efn = (dir==='left'||dir==='right') ? easeFns.elasticOut : dir==='down' ? easeFns.backOut : easeFns.cubicOut
-        animateEl(el, { delay, direction: dir, distance: '32px', easeFn: efn })
+      document.querySelectorAll('#reveal-els .prev-card').forEach(el=>{
+        const dir=el.dataset.dir||'up', delay=Number(el.dataset.delay)||0
+        const ease=(dir==='left'||dir==='right')?E.elasticOut:dir==='down'?E.backOut:E.cubicOut
+        animEl(el,{delay,dir,ease})
       })
     },
     counter() {
-      document.querySelectorAll('#counter-demo [data-count]').forEach(el => animateCount(el))
+      document.querySelectorAll('#counter-els [data-count]').forEach(el=>animCount(el))
     },
     progress() {
-      document.querySelectorAll('#demo-timeline .sc-fill').forEach(f => { f.style.clipPath = 'inset(0 100% 0 0)' })
-      setTimeout(updateProgress, 50)
+      animProgress([...document.querySelectorAll('#progress-els .prev-step-fill')])
     },
     'text-reveal'() {
-      trStates.forEach(({ spans, opts }) => runTextReveal(spans, opts))
+      trStates.forEach((spans,k)=>runTextReveal(spans,{stagger:k==='letters'?18:40}))
     },
     stagger() {
-      document.querySelectorAll('#stagger-demo .stagger-tile').forEach((el,i) => animateEl(el, { delay: i*80 }))
+      document.querySelectorAll('#stagger-els .prev-stagger-tile').forEach((el,i)=>animEl(el,{delay:i*100}))
     },
-    'blur-reveal'() {
-      animateBlur(document.querySelector('#blur-reveal-demo'))
-    },
+    'blur-reveal'() { animBlur(document.getElementById('blur-el')) },
     zoom() {
-      document.querySelectorAll('#zoom-demo .zoom-card').forEach((el,i) => animateZoomEl(el, { delay: i*120 }))
-    },
-    parallax() {
-      restartParallax()
-    },
-    'scroll-progress'() {
-      restartScrollProgress()
-    },
-    scene() {
-      restartScene()
+      document.querySelectorAll('#zoom-els .prev-zoom-card').forEach((el,i)=>animZoom(el,{delay:i*120}))
     },
   }
 
-  document.querySelectorAll('.replay-btn').forEach(btn => {
-    btn.addEventListener('click', () => { const k = btn.dataset.replay; if (replays[k]) replays[k]() })
+  document.querySelectorAll('.replay-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{ const k=btn.dataset.replay; if(replays[k]) replays[k]() })
+  })
+
+  // ── Code toggle
+  document.querySelectorAll('.code-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const drawer=document.getElementById('code-'+btn.dataset.code)
+      if (drawer) drawer.classList.toggle('open')
+    })
+  })
+
+  // ── Filter
+  document.querySelectorAll('.filter-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'))
+      btn.classList.add('active')
+      const f=btn.dataset.filter
+      document.querySelectorAll('.effect-card').forEach(card=>{
+        card.style.display = (f==='all'||card.dataset.category===f) ? '' : 'none'
+      })
+    })
+  })
+
+  // ── Copy install command
+  document.getElementById('copy-install')?.addEventListener('click', async ()=>{
+    await navigator.clipboard.writeText('npm install scroll-craft').catch(()=>{})
+    const btn=document.getElementById('copy-install')
+    btn.style.color='var(--cyan)'
+    setTimeout(()=>btn.style.color='',1200)
   })
 </script>
 </body>
