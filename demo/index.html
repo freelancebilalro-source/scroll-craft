@@ -73,41 +73,35 @@
     .counter-label { color: var(--muted); font-size: 0.8rem; font-family: 'Space Mono', monospace; letter-spacing: 0.1em; }
 
     /* ── Progress / Timeline demo ── */
-    .timeline { display: flex; flex-direction: column; gap: 0; }
-    .step {
-      display: grid;
-      grid-template-columns: 64px 1fr;
-      gap: 24px;
-      padding: 40px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      align-items: start;
-    }
+    .timeline { display: grid; gap: 1rem; }
+    .step { min-height: 18rem; padding: 40px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
     .step:last-child { border-bottom: none; }
-    .step-num {
+    .step-num-wrap {
+      display: block;
       position: relative;
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      border: 2px solid rgba(0,255,209,0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.9rem;
-      color: var(--muted);
-      flex-shrink: 0;
-      overflow: hidden;
+      margin-bottom: 2rem;
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(3.5rem, 10vw, 5.5rem);
+      font-weight: 900;
+      line-height: 0.85;
+      user-select: none;
+    }
+    .step-num-ghost {
+      display: block;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(255,255,255,0.15);
     }
     .sc-fill {
       position: absolute;
       inset: 0;
-      border-radius: 50%;
-      background: conic-gradient(from 0deg, var(--cyan) 0%, transparent 0%);
+      display: block;
+      color: var(--cyan);
+      text-shadow: 0 0 24px rgba(0, 255, 209, 0.5);
       clip-path: inset(0 100% 0 0);
-      transition: clip-path 0.05s linear;
+      transition: clip-path 0.1s linear;
+      will-change: clip-path;
     }
-    .step-body { padding-top: 8px; }
-    .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.25rem; margin-bottom: 8px; }
+    .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 12px; }
     .step-text { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
 
     /* ── Code snippet ── */
@@ -263,44 +257,24 @@
 
   <div class="timeline" id="demo-timeline">
     <div class="step">
-      <div class="step-num">
-        <span>01</span>
-        <div class="sc-fill"></div>
-      </div>
-      <div class="step-body">
-        <div class="step-title">Extract</div>
-        <div class="step-text">Pull existing scroll logic out of your production code into a reusable module.</div>
-      </div>
+      <span class="step-num-wrap"><span class="step-num-ghost">01</span><span class="sc-fill">01</span></span>
+      <div class="step-title">Extract</div>
+      <div class="step-text">Pull existing scroll logic out of your production code into a reusable module.</div>
     </div>
     <div class="step">
-      <div class="step-num">
-        <span>02</span>
-        <div class="sc-fill"></div>
-      </div>
-      <div class="step-body">
-        <div class="step-title">Package</div>
-        <div class="step-text">Add TypeScript types, JSDoc, and a tsup build config for ESM + CJS output.</div>
-      </div>
+      <span class="step-num-wrap"><span class="step-num-ghost">02</span><span class="sc-fill">02</span></span>
+      <div class="step-title">Package</div>
+      <div class="step-text">Add TypeScript types, JSDoc, and a tsup build config for ESM + CJS output.</div>
     </div>
     <div class="step">
-      <div class="step-num">
-        <span>03</span>
-        <div class="sc-fill"></div>
-      </div>
-      <div class="step-body">
-        <div class="step-title">Publish</div>
-        <div class="step-text">Push to npm. Drop into any project with one import — no stylesheet required.</div>
-      </div>
+      <span class="step-num-wrap"><span class="step-num-ghost">03</span><span class="sc-fill">03</span></span>
+      <div class="step-title">Publish</div>
+      <div class="step-text">Push to npm. Drop into any project with one import — no stylesheet required.</div>
     </div>
     <div class="step">
-      <div class="step-num">
-        <span>04</span>
-        <div class="sc-fill"></div>
-      </div>
-      <div class="step-body">
-        <div class="step-title">Embed</div>
-        <div class="step-text">Use as ESM import, CJS require, or a plain &lt;script&gt; tag on any page.</div>
-      </div>
+      <span class="step-num-wrap"><span class="step-num-ghost">04</span><span class="sc-fill">04</span></span>
+      <div class="step-title">Embed</div>
+      <div class="step-text">Use as ESM import, CJS require, or a plain &lt;script&gt; tag on any page.</div>
     </div>
   </div>
 
@@ -423,7 +397,6 @@ sc.<span class="fn">destroy</span>()
         const rect = step.getBoundingClientRect()
         const prog = Math.min(1, Math.max(0, (winH * 0.82 - rect.top) / (winH * 0.62)))
         fills[i].style.clipPath = `inset(0 ${Math.round((1 - prog) * 100)}% 0 0)`
-        fills[i].style.background = `conic-gradient(from 0deg, #00FFD1 ${Math.round(prog * 360)}deg, transparent 0deg)`
       })
     }
     window.addEventListener('scroll', update, { passive: true })
