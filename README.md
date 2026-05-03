@@ -58,6 +58,7 @@ sc.reveal('.card')
   .counter('[data-count]', { duration: 1400 })
   .parallax('.hero-orb')
   .progress('#timeline .step')
+  .scrollProgress('.page-progress', { axis: 'y', property: 'width' })
   .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline')
   .zoom('.product-card')
@@ -166,6 +167,35 @@ parallax('.hero-orb', {
 
 The effect batches layout reads, writes transforms in `requestAnimationFrame`, and disables movement for users with `prefers-reduced-motion: reduce`.
 
+### Scroll Progress
+
+Represent page or container scroll progress from 0 to 1.
+
+```ts
+import { scrollProgress } from 'scroll-craft'
+
+scrollProgress('.page-progress', {
+  axis: 'y',
+  property: 'width',
+  container: window,
+})
+```
+
+```html
+<div class="page-progress"></div>
+```
+
+```css
+.page-progress {
+  position: fixed;
+  inset: 0 auto auto 0;
+  height: 4px;
+  width: 0;
+}
+```
+
+Use `property: 'scale'` for transform-based indicators. With `axis: 'x'`, ScrollCraft writes `scaleX(...)`; with `axis: 'y'`, it writes `scaleY(...)`.
+
 ### Text Reveal
 
 Split text into word or letter spans and reveal each piece with a staggered scroll animation.
@@ -258,6 +288,7 @@ sc.reveal('.hero-text', { delay: 100, direction: 'up' })
   .counter('[data-count]', { duration: 1200 })
   .parallax('.hero-orb', { speed: 0.2 })
   .progress('#timeline .step')
+  .scrollProgress('.page-progress', { axis: 'y', property: 'width' })
   .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline', { type: 'words' })
   .zoom('.product-card', { from: 0.94 })
@@ -324,6 +355,14 @@ sc.destroy()
 | `reverse` | `boolean` | `false` | Invert movement direction |
 | `clamp` | `number` | `120` | Maximum absolute translation in px |
 | `rootMargin` | `string` | `'0px'` | Observer root margin for relevance tracking |
+
+### `scrollProgress(target, options?)`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `axis` | `'x' \| 'y'` | `'x'` | Scroll axis to track |
+| `property` | `'scale' \| 'width' \| 'height'` | `'scale'` | Style strategy used to display progress |
+| `container` | `Element \| Window` | `window` | Scroll container to read from |
 
 ### `textReveal(target, options?)`
 
@@ -392,7 +431,7 @@ You can also pass a custom function: `ease: (t) => t * t`
 scroll-craft/
 ├── src/
 │   ├── index.ts      — ScrollCraft class + re-exports
-│   ├── effects.ts    — blurReveal, reveal, counter, parallax, progress, stagger, textReveal, zoom
+│   ├── effects.ts    — blurReveal, reveal, counter, parallax, progress, scrollProgress, stagger, textReveal, zoom
 │   └── easing.ts     — easing functions
 ├── dist/             — built output (ESM + CJS + .d.ts)
 ├── demo/

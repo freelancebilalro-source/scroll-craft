@@ -15,6 +15,19 @@
     html { scroll-behavior: smooth; scroll-snap-type: y proximity; }
     body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; overflow-x: hidden; }
 
+    .page-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+      width: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--gold));
+      box-shadow: 0 0 24px rgba(0,255,209,0.35);
+      pointer-events: none;
+      will-change: width;
+    }
+
     /* snap sections */
     .snap-section {
       scroll-snap-align: start;
@@ -190,6 +203,47 @@
       .parallax-caption { left: 22px; right: 22px; bottom: 22px; }
     }
 
+    /* scroll progress */
+    .scroll-progress-demo {
+      display: grid;
+      gap: 22px;
+      padding: 28px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 26px;
+      background: linear-gradient(145deg, rgba(0,255,209,0.09), rgba(255,255,255,0.025));
+    }
+    .progress-rail {
+      position: relative;
+      height: 16px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+    }
+    .progress-rail__fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--cyan), var(--magenta));
+      will-change: width;
+    }
+    .progress-meter {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+    .progress-meter__value {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 900;
+      line-height: 0.9;
+      color: var(--cyan);
+      min-width: 3ch;
+    }
+    .progress-meter__text {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
     /* code */
     .code-block { background: var(--bg-alt); border: 1px solid rgba(0,255,209,0.12); border-radius: 12px; padding: 22px 26px; font-family: 'Space Mono', monospace; font-size: 0.78rem; line-height: 1.8; color: #a0a0b8; overflow-x: auto; margin-top: 28px; }
     .code-block .kw { color: var(--magenta); }
@@ -203,6 +257,7 @@
   </style>
 </head>
 <body>
+<div class="page-progress" id="page-scroll-progress"></div>
 
 <!-- Hero -->
 <div class="hero-wrap hero">
@@ -413,6 +468,29 @@
 })</div>
 </section>
 
+<!-- Scroll Progress -->
+<section class="snap-section" id="s-scroll-progress">
+  <div class="section-head">
+    <span class="label">Effect 09 — Scroll Progress</span>
+    <button class="replay-btn" data-replay="scroll-progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>UPDATE</button>
+  </div>
+  <h2>Scroll Progress</h2>
+  <p class="desc">Represent page or container scroll progress as scale, width, or height from 0 to 1.</p>
+  <div class="scroll-progress-demo">
+    <div class="progress-meter">
+      <div class="progress-meter__value" id="scroll-progress-value">0%</div>
+      <p class="progress-meter__text">The fixed bar at the top of the page and this rail both track document scroll using width percentages.</p>
+    </div>
+    <div class="progress-rail"><div class="progress-rail__fill" id="scroll-progress-rail"></div></div>
+  </div>
+  <div class="code-block"><span class="kw">import</span> { <span class="fn">scrollProgress</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">scrollProgress</span>(<span class="str">'.page-progress'</span>, {
+  axis:     <span class="str">'y'</span>,
+  property: <span class="str">'width'</span>,
+})</div>
+</section>
+
 <footer>
   <p>Built by <a href="https://bilalstudio.io">Bilal Studio</a> · <a href="https://github.com/Bilal-Studios/scroll-craft">GitHub</a> · <a href="https://npmjs.com/package/scroll-craft">npm</a></p>
 </footer>
@@ -563,6 +641,74 @@
     )
   }
 
+  function createScrollProgress(targets, { axis = 'x', property = 'scale', container = window, onUpdate } = {}) {
+    const elements = [...document.querySelectorAll(targets)]
+    let frame = 0
+
+    function readProgress() {
+      if (container === window) {
+        const root = document.documentElement
+        const max = axis === 'x'
+          ? root.scrollWidth - window.innerWidth
+          : root.scrollHeight - window.innerHeight
+        const current = axis === 'x' ? window.scrollX : window.scrollY
+        return max <= 0 ? 1 : Math.min(1, Math.max(0, current / max))
+      }
+
+      const max = axis === 'x'
+        ? container.scrollWidth - container.clientWidth
+        : container.scrollHeight - container.clientHeight
+      const current = axis === 'x' ? container.scrollLeft : container.scrollTop
+      return max <= 0 ? 1 : Math.min(1, Math.max(0, current / max))
+    }
+
+    function write() {
+      frame = 0
+      const progress = readProgress()
+      elements.forEach(el => {
+        if (property === 'scale') {
+          el.style.transform = axis === 'x' ? `scaleX(${progress})` : `scaleY(${progress})`
+          el.style.transformOrigin = axis === 'x' ? 'left center' : 'center top'
+        } else if (property === 'width') {
+          el.style.width = `${progress * 100}%`
+        } else {
+          el.style.height = `${progress * 100}%`
+        }
+      })
+      onUpdate?.(progress)
+    }
+
+    function schedule() {
+      if (frame) return
+      frame = requestAnimationFrame(write)
+    }
+
+    container.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    schedule()
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      container.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+    }
+  }
+
+  let stopPageProgress = () => {}
+
+  function restartScrollProgress() {
+    stopPageProgress()
+    stopPageProgress = createScrollProgress('#page-scroll-progress, #scroll-progress-rail', {
+      axis: 'y',
+      property: 'width',
+      onUpdate(progress) {
+        document.querySelector('#scroll-progress-value').textContent = `${Math.round(progress * 100)}%`
+      },
+    })
+  }
+
+  restartScrollProgress()
+
   // ── Text reveal split + animate
   const trStates = new Map()
 
@@ -707,6 +853,9 @@
     },
     parallax() {
       restartParallax()
+    },
+    'scroll-progress'() {
+      restartScrollProgress()
     },
   }
 

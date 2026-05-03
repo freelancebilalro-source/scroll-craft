@@ -56,6 +56,15 @@ export interface ProgressOptions {
   fillSelector?: string
 }
 
+export interface ScrollProgressOptions {
+  /** Scroll axis to track. Default: 'x' */
+  axis?: 'x' | 'y'
+  /** CSS property strategy used to display progress. Default: 'scale' */
+  property?: 'scale' | 'width' | 'height'
+  /** Scroll container to track. Default: window */
+  container?: Element | Window
+}
+
 export interface TextRevealOptions {
   /** Split animation by words or individual letters. Default: 'words' */
   type?: 'words' | 'letters'
@@ -235,6 +244,15 @@ type ParallaxElementState = {
   width: number
   height: number
   visible: boolean
+}
+
+type ScrollProgressElementState = {
+  element: HTMLElement
+  transform: string
+  transformOrigin: string
+  width: string
+  height: string
+  willChange: string
 }
 
 type LegacyMediaQueryList = MediaQueryList & {
@@ -566,6 +584,110 @@ export function progress(
   update()
 
   return () => window.removeEventListener('scroll', update)
+}
+
+// ─── scrollProgress ──────────────────────────────────────────────────────────
+
+/**
+ * Updates targets to represent page or container scroll progress from 0 to 1.
+ * Returns a cleanup function that removes listeners and restores inline styles.
+ *
+ * @example
+ * const stop = scrollProgress('.progress-bar', { axis: 'x', property: 'scale' })
+ */
+export function scrollProgress(
+  target: string | Element | NodeList | Element[],
+  options: ScrollProgressOptions = {},
+): () => void {
+  const {
+    axis = 'x',
+    property = 'scale',
+    container = window,
+  } = options
+
+  const elements = resolveElements(target) as HTMLElement[]
+  if (!elements.length) return () => {}
+
+  const states = elements.map<ScrollProgressElementState>((element) => ({
+    element,
+    transform: element.style.transform,
+    transformOrigin: element.style.transformOrigin,
+    width: element.style.width,
+    height: element.style.height,
+    willChange: element.style.willChange,
+  }))
+  const scrollContainer = container === window ? window : container as Element
+  let rafId: number | null = null
+
+  function getProgress(): number {
+    if (scrollContainer === window) {
+      const root = document.documentElement
+      const body = document.body
+      const scrollLeft = window.scrollX || window.pageXOffset
+      const scrollTop = window.scrollY || window.pageYOffset
+      const scrollWidth = Math.max(root.scrollWidth, body?.scrollWidth ?? 0)
+      const scrollHeight = Math.max(root.scrollHeight, body?.scrollHeight ?? 0)
+      const max = axis === 'x'
+        ? scrollWidth - window.innerWidth
+        : scrollHeight - window.innerHeight
+      const current = axis === 'x' ? scrollLeft : scrollTop
+      return max <= 0 ? 1 : Math.min(1, Math.max(0, current / max))
+    }
+
+    const element = scrollContainer as Element
+    const max = axis === 'x'
+      ? element.scrollWidth - element.clientWidth
+      : element.scrollHeight - element.clientHeight
+    const current = axis === 'x' ? element.scrollLeft : element.scrollTop
+    return max <= 0 ? 1 : Math.min(1, Math.max(0, current / max))
+  }
+
+  function write(): void {
+    rafId = null
+    const value = getProgress()
+
+    states.forEach((state) => {
+      if (property === 'scale') {
+        const scale = axis === 'x' ? `scaleX(${value})` : `scaleY(${value})`
+        state.element.style.transform = state.transform ? `${state.transform} ${scale}` : scale
+        state.element.style.transformOrigin = axis === 'x' ? 'left center' : 'center top'
+        state.element.style.willChange = 'transform'
+        return
+      }
+
+      if (property === 'width') {
+        state.element.style.width = `${value * 100}%`
+        state.element.style.willChange = 'width'
+        return
+      }
+
+      state.element.style.height = `${value * 100}%`
+      state.element.style.willChange = 'height'
+    })
+  }
+
+  function schedule(): void {
+    if (rafId !== null) return
+    rafId = requestAnimationFrame(write)
+  }
+
+  schedule()
+  scrollContainer.addEventListener('scroll', schedule, { passive: true })
+  window.addEventListener('resize', schedule)
+
+  return () => {
+    if (rafId !== null) cancelAnimationFrame(rafId)
+    rafId = null
+    scrollContainer.removeEventListener('scroll', schedule)
+    window.removeEventListener('resize', schedule)
+    states.forEach((state) => {
+      state.element.style.transform = state.transform
+      state.element.style.transformOrigin = state.transformOrigin
+      state.element.style.width = state.width
+      state.element.style.height = state.height
+      state.element.style.willChange = state.willChange
+    })
+  }
 }
 
 // ─── parallax ────────────────────────────────────────────────────────────────
