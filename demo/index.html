@@ -527,22 +527,22 @@
   </div>
 
   <!-- Chainable API -->
-  <div class="effect-card" data-category="api" style="grid-column: span 2">
-    <div class="preview" id="prev-api" style="height:auto;min-height:180px">
-      <div class="preview-inner" style="align-items:flex-start">
+  <div class="effect-card" data-category="api" style="grid-column: 1 / -1">
+    <div class="preview" id="prev-api" style="height:auto;min-height:180px;background:var(--bg)">
+      <div class="preview-inner" style="align-items:flex-start;padding:28px 32px">
         <div class="prev-chain-code">
           <span style="color:var(--magenta)">import</span> { <span style="color:var(--cyan)">ScrollCraft</span> } <span style="color:var(--magenta)">from</span> <span style="color:var(--gold)">"scroll-craft"</span><br/>
           <br/>
           <span style="color:var(--magenta)">const</span> sc = <span style="color:var(--magenta)">new</span> <span style="color:var(--cyan)">ScrollCraft</span>()<br/>
           <br/>
           sc.<span style="color:var(--cyan)">reveal</span>(<span style="color:var(--gold)">".hero"</span>, { direction: <span style="color:var(--gold)">"up"</span> })<br/>
-          </div><!-- /grid -->nbsp;</div><!-- /grid -->nbsp;.<span style="color:var(--cyan)">blurReveal</span>(<span style="color:var(--gold)">".panel"</span>, { blur: <span style="color:var(--gold)">"12px"</span> })<br/>
-          </div><!-- /grid -->nbsp;</div><!-- /grid -->nbsp;.<span style="color:var(--cyan)">counter</span>(<span style="color:var(--gold)">"[data-count]"</span>, { duration: 1200 })<br/>
-          </div><!-- /grid -->nbsp;</div><!-- /grid -->nbsp;.<span style="color:var(--cyan)">progress</span>(<span style="color:var(--gold)">"#timeline .step"</span>)<br/>
-          </div><!-- /grid -->nbsp;</div><!-- /grid -->nbsp;.<span style="color:var(--cyan)">stagger</span>(<span style="color:var(--gold)">".grid"</span>, { children: <span style="color:var(--gold)">".card"</span> })<br/>
-          </div><!-- /grid -->nbsp;</div><!-- /grid -->nbsp;.<span style="color:var(--cyan)">textReveal</span>(<span style="color:var(--gold)">".headline"</span>, { type: <span style="color:var(--gold)">"words"</span> })<br/>
-          </div><!-- /grid -->nbsp;</div><!-- /grid -->nbsp;.<span style="color:var(--cyan)">zoom</span>(<span style="color:var(--gold)">".product"</span>, { from: 0.94 })<br/>
-          </div><!-- /grid -->nbsp;</div><!-- /grid -->nbsp;.<span style="color:var(--cyan)">parallax</span>(<span style="color:var(--gold)">".bg"</span>, { speed: 0.3 })<br/>
+          &nbsp;&nbsp;.<span style="color:var(--cyan)">blurReveal</span>(<span style="color:var(--gold)">".panel"</span>, { blur: <span style="color:var(--gold)">"12px"</span> })<br/>
+          &nbsp;&nbsp;.<span style="color:var(--cyan)">counter</span>(<span style="color:var(--gold)">"[data-count]"</span>, { duration: 1200 })<br/>
+          &nbsp;&nbsp;.<span style="color:var(--cyan)">progress</span>(<span style="color:var(--gold)">"#timeline .step"</span>)<br/>
+          &nbsp;&nbsp;.<span style="color:var(--cyan)">stagger</span>(<span style="color:var(--gold)">".grid"</span>, { children: <span style="color:var(--gold)">"  .card"</span> })<br/>
+          &nbsp;&nbsp;.<span style="color:var(--cyan)">textReveal</span>(<span style="color:var(--gold)">".headline"</span>, { type: <span style="color:var(--gold)">"words"</span> })<br/>
+          &nbsp;&nbsp;.<span style="color:var(--cyan)">zoom</span>(<span style="color:var(--gold)">".product"</span>, { from: 0.94 })<br/>
+          &nbsp;&nbsp;.<span style="color:var(--cyan)">parallax</span>(<span style="color:var(--gold)">".bg"</span>, { speed: 0.3 })<br/>
           <br/>
           <span style="color:#444460">// clean up all observers + listeners</span><br/>
           sc.<span style="color:var(--cyan)">destroy</span>()
