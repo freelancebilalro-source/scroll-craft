@@ -2,15 +2,17 @@ import {
   reveal as _reveal,
   counter as _counter,
   progress as _progress,
+  textReveal as _textReveal,
   type RevealOptions,
   type CounterOptions,
   type ProgressOptions,
+  type TextRevealOptions,
 } from './effects'
 
-export type { RevealOptions, CounterOptions, ProgressOptions, Direction } from './effects'
+export type { RevealOptions, CounterOptions, ProgressOptions, TextRevealOptions, Direction } from './effects'
 export type { EaseName, EaseFn } from './easing'
 export { easings, resolveEase } from './easing'
-export { reveal, counter, progress } from './effects'
+export { reveal, counter, progress, textReveal } from './effects'
 
 // ─── Class API ────────────────────────────────────────────────────────────────
 
@@ -24,6 +26,7 @@ type Target = string | Element | NodeList | Element[]
  * sc.reveal('.hero-text', { delay: 100 })
  *   .counter('[data-count]', { duration: 1200 })
  *   .progress('#timeline .step')
+ *   .textReveal('.headline')
  */
 export class ScrollCraft {
   private cleanups: Array<() => void> = []
@@ -43,11 +46,15 @@ export class ScrollCraft {
     return this
   }
 
+  textReveal(target: Target, options?: TextRevealOptions): this {
+    this.cleanups.push(_textReveal(target, options))
+    return this
+  }
+
   /** Disconnect all observers and remove all scroll listeners. */
   destroy(): void {
     this.cleanups.forEach((fn) => fn())
     this.cleanups = []
   }
 }
-
 

@@ -56,6 +56,25 @@ export interface ProgressOptions {
   fillSelector?: string
 }
 
+export interface TextRevealOptions {
+  /** Split animation by words or individual letters. Default: 'words' */
+  type?: 'words' | 'letters'
+  /** Delay between each word/letter animation in ms. Default: 40 */
+  stagger?: number
+  /** Animation duration for each word/letter in ms. Default: 600 */
+  duration?: number
+  /** Easing function name or custom fn. Default: 'cubicOut' */
+  ease?: EaseName | EaseFn
+  /** Fraction of element visible before triggering. Default: 0.12 */
+  threshold?: number
+  /** Viewport margin to shrink trigger zone (CSS shorthand). Default: '0px 0px -10% 0px' */
+  rootMargin?: string
+  /** Whether to unobserve after first reveal. Default: true */
+  once?: boolean
+  /** CSS class added when in view. Default: 'sc-in' */
+  inClass?: string
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveElements(target: string | Element | NodeList | Element[]): Element[] {
@@ -71,6 +90,143 @@ function directionToTransform(direction: Direction, distance: string): string {
     case 'left':  return `translateX(${distance})`
     case 'right': return `translateX(-${distance})`
   }
+}
+
+type TextRevealSplit = {
+  parent: Node
+  original: Text
+  nodes: Node[]
+}
+
+type TextRevealElementState = {
+  element: HTMLElement
+  spans: HTMLElement[]
+  splits: TextRevealSplit[]
+  originalAriaLabel: string | null
+  hadAriaLabel: boolean
+  addedAriaLabel: boolean
+  restored: boolean
+}
+
+function isSkippableTextParent(parent: Node | null): boolean {
+  if (!(parent instanceof Element)) return false
+  return ['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'SELECT', 'OPTION'].includes(parent.tagName)
+}
+
+function createTextRevealSpan(text: string, hidden: boolean): HTMLElement {
+  const span = document.createElement('span')
+  span.textContent = text
+  span.style.display = 'inline-block'
+  span.style.opacity = '0'
+  span.style.transform = 'translateY(0.75em)'
+  span.style.willChange = 'opacity, transform'
+  if (hidden) span.setAttribute('aria-hidden', 'true')
+  return span
+}
+
+function splitTextNode(textNode: Text, type: TextRevealOptions['type'], hidden: boolean): TextRevealSplit | null {
+  const text = textNode.data
+  if (!/\S/.test(text)) return null
+
+  const fragment = document.createDocumentFragment()
+  const nodes: Node[] = []
+  const parts = type === 'letters'
+    ? Array.from(text)
+    : text.match(/\S+|\s+/g) ?? []
+
+  parts.forEach((part) => {
+    const node = /\s/.test(part)
+      ? document.createTextNode(part)
+      : createTextRevealSpan(part, hidden)
+    fragment.appendChild(node)
+    nodes.push(node)
+  })
+
+  const parent = textNode.parentNode
+  if (!parent) return null
+
+  parent.replaceChild(fragment, textNode)
+  return { parent, original: textNode, nodes }
+}
+
+function splitElementText(element: HTMLElement, type: TextRevealOptions['type']): TextRevealElementState {
+  const hasNestedElements = Array.from(element.children).length > 0
+  const originalAriaLabel = element.getAttribute('aria-label')
+  const hadAriaLabel = element.hasAttribute('aria-label')
+  const addedAriaLabel = !hasNestedElements && !hadAriaLabel
+
+  if (addedAriaLabel) element.setAttribute('aria-label', element.textContent ?? '')
+
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) => {
+      if (isSkippableTextParent(node.parentNode)) return NodeFilter.FILTER_REJECT
+      return /\S/.test(node.textContent ?? '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+    },
+  })
+  const textNodes: Text[] = []
+  let current = walker.nextNode()
+  while (current) {
+    textNodes.push(current as Text)
+    current = walker.nextNode()
+  }
+
+  const splits: TextRevealSplit[] = []
+  textNodes.forEach((textNode) => {
+    const split = splitTextNode(textNode, type, addedAriaLabel)
+    if (split) splits.push(split)
+  })
+
+  const spans = splits.reduce<HTMLElement[]>((acc, split) => {
+    split.nodes.forEach((node) => {
+      if (node instanceof HTMLElement) acc.push(node)
+    })
+    return acc
+  }, [])
+
+  return {
+    element,
+    spans,
+    splits,
+    originalAriaLabel,
+    hadAriaLabel,
+    addedAriaLabel,
+    restored: false,
+  }
+}
+
+function restoreTextRevealState(state: TextRevealElementState): void {
+  if (state.restored) return
+  state.restored = true
+
+  state.splits.forEach((split) => {
+    if (!split.nodes.length || !split.parent.isConnected || split.nodes[0].parentNode !== split.parent) return
+    split.parent.insertBefore(split.original, split.nodes[0])
+    split.nodes.forEach((node) => {
+      if (node.parentNode === split.parent) split.parent.removeChild(node)
+    })
+  })
+
+  if (state.addedAriaLabel) {
+    state.element.removeAttribute('aria-label')
+  } else if (state.hadAriaLabel && state.originalAriaLabel !== null) {
+    state.element.setAttribute('aria-label', state.originalAriaLabel)
+  }
+}
+
+function resetTextRevealSpans(spans: HTMLElement[]): void {
+  spans.forEach((span) => {
+    span.style.opacity = '0'
+    span.style.transform = 'translateY(0.75em)'
+    span.style.willChange = 'opacity, transform'
+  })
+}
+
+function finishTextRevealSpans(spans: HTMLElement[]): void {
+  spans.forEach((span) => {
+    span.style.opacity = '1'
+    span.style.transform = 'none'
+    span.style.willChange = 'auto'
+  })
 }
 
 // ─── reveal ───────────────────────────────────────────────────────────────────
@@ -260,4 +416,120 @@ export function progress(
   update()
 
   return () => window.removeEventListener('scroll', update)
+}
+
+// ─── textReveal ──────────────────────────────────────────────────────────────
+
+/**
+ * Splits text into word or letter spans and animates them into view.
+ * Returns a cleanup function that disconnects the observer and restores the original text nodes.
+ *
+ * @example
+ * const stop = textReveal('.headline', { type: 'letters', stagger: 24 })
+ */
+export function textReveal(
+  target: string | Element | NodeList | Element[],
+  options: TextRevealOptions = {},
+): () => void {
+  const {
+    type = 'words',
+    stagger = 40,
+    duration = 600,
+    ease = 'cubicOut',
+    threshold = 0.12,
+    rootMargin = '0px 0px -10% 0px',
+    once = true,
+    inClass = 'sc-in',
+  } = options
+
+  const easeFn = resolveEase(ease)
+  const elements = resolveElements(target) as HTMLElement[]
+  if (!elements.length) return () => {}
+
+  const states = elements
+    .map((element) => splitElementText(element, type))
+    .filter((state) => state.spans.length > 0)
+  const rafIds = new Set<number>()
+
+  if (!states.length) return () => {}
+
+  if (!('IntersectionObserver' in window)) {
+    states.forEach((state) => {
+      finishTextRevealSpans(state.spans)
+      state.element.classList.add(inClass)
+    })
+    return () => {
+      states.forEach((state) => {
+        state.element.classList.remove(inClass)
+        restoreTextRevealState(state)
+      })
+    }
+  }
+
+  const stateByElement = new Map<Element, TextRevealElementState>(
+    states.map((state) => [state.element, state]),
+  )
+
+  function animateSpan(span: HTMLElement, delay: number): void {
+    const start = performance.now() + delay
+
+    function step(now: number) {
+      if (now < start) {
+        const rafId = requestAnimationFrame(step)
+        rafIds.add(rafId)
+        return
+      }
+
+      const progress = Math.min(1, (now - start) / duration)
+      const eased = easeFn(progress)
+      span.style.opacity = String(eased)
+      span.style.transform = `translateY(${(1 - eased) * 0.75}em)`
+
+      if (progress < 1) {
+        const rafId = requestAnimationFrame(step)
+        rafIds.add(rafId)
+      } else {
+        span.style.opacity = '1'
+        span.style.transform = 'none'
+        span.style.willChange = 'auto'
+      }
+    }
+
+    const rafId = requestAnimationFrame(step)
+    rafIds.add(rafId)
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const state = stateByElement.get(entry.target)
+        if (!state) return
+
+        if (!entry.isIntersecting) {
+          if (!once) {
+            state.element.classList.remove(inClass)
+            resetTextRevealSpans(state.spans)
+          }
+          return
+        }
+
+        state.spans.forEach((span, index) => animateSpan(span, index * stagger))
+        state.element.classList.add(inClass)
+        if (once) observer.unobserve(entry.target)
+      })
+    },
+    { threshold, rootMargin },
+  )
+
+  states.forEach((state) => observer.observe(state.element))
+
+  return () => {
+    observer.disconnect()
+    rafIds.forEach((rafId) => cancelAnimationFrame(rafId))
+    rafIds.clear()
+    states.forEach((state) => {
+      state.element.classList.remove(inClass)
+      restoreTextRevealState(state)
+    })
+  }
 }

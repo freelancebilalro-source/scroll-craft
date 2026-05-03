@@ -104,6 +104,33 @@
     .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 12px; }
     .step-text { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
 
+    /* ── Text reveal demo ── */
+    .text-reveal-showcase {
+      display: grid;
+      gap: 28px;
+      padding: 34px;
+      background:
+        radial-gradient(circle at top left, rgba(0,255,209,0.16), transparent 35%),
+        linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(0,255,209,0.14);
+      border-radius: 22px;
+      overflow: hidden;
+    }
+    .text-reveal-line {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.25rem, 7vw, 4.7rem);
+      font-weight: 900;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+    .text-reveal-line em { color: var(--cyan); font-style: normal; }
+    .text-reveal-note {
+      max-width: 620px;
+      color: #9696aa;
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
     /* ── Code snippet ── */
     .code-block {
       background: var(--bg-alt);
@@ -147,7 +174,7 @@
 <section class="hero" style="position:relative;">
   <p class="hero-eyebrow js-reveal">scroll-craft v0.1</p>
   <h1 class="js-reveal" style="--delay:80">Scroll<br/><em>animation</em><br/>that ships.</h1>
-  <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. IntersectionObserver-powered reveals, animated counters, and scroll-progress fills — all in TypeScript.</p>
+  <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. IntersectionObserver-powered reveals, animated counters, scroll-progress fills, and staggered text reveals — all in TypeScript.</p>
   <div class="badge-row js-reveal" style="--delay:240">
     <span class="badge">0 dependencies</span>
     <span class="badge">~4KB minified</span>
@@ -292,11 +319,38 @@
 
 <div class="divider"></div>
 
+<!-- ── Text Reveal ──────────────────────────────────────────────────────────── -->
+<section id="text-reveal">
+  <p class="label js-reveal">Effect 04</p>
+  <h2 class="js-reveal" style="--delay:60">Text Reveal</h2>
+  <p class="desc js-reveal" style="--delay:120">Split text into accessible word or letter spans and reveal each piece with a staggered scroll trigger.</p>
+
+  <div class="text-reveal-showcase js-reveal" style="--delay:80">
+    <p class="text-reveal-line js-text-reveal">Words arrive with intent, <em>one beat at a time.</em></p>
+    <p class="text-reveal-note js-text-reveal-letters">Letters can cascade too, while nested emphasis stays in the DOM instead of being flattened.</p>
+  </div>
+
+  <div class="code-block js-reveal" style="--delay:80">
+<span class="kw">import</span> { <span class="fn">textReveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">textReveal</span>(<span class="str">'.headline'</span>, {
+  type:     <span class="str">'words'</span>,
+  stagger:  40,
+  duration: 600,
+  ease:     <span class="str">'cubicOut'</span>,
+})
+
+<span class="fn">textReveal</span>(<span class="str">'.eyebrow'</span>, { type: <span class="str">'letters'</span>, stagger: 18 })
+  </div>
+</section>
+
+<div class="divider"></div>
+
 <!-- ── Class API ─────────────────────────────────────────────────────────────── -->
 <section id="api">
   <p class="label js-reveal">API</p>
   <h2 class="js-reveal" style="--delay:60">Chainable class</h2>
-  <p class="desc js-reveal" style="--delay:120">All three effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
+  <p class="desc js-reveal" style="--delay:120">All four effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
 
   <div class="code-block js-reveal" style="--delay:80">
 <span class="kw">import</span> { <span class="fn">ScrollCraft</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
@@ -306,6 +360,7 @@
 sc.<span class="fn">reveal</span>(<span class="str">'.hero-text'</span>, { delay: 100, direction: <span class="str">'up'</span> })
   .<span class="fn">counter</span>(<span class="str">'[data-count]'</span>, { duration: 1200 })
   .<span class="fn">progress</span>(<span class="str">'#timeline .step'</span>)
+  .<span class="fn">textReveal</span>(<span class="str">'.headline'</span>, { type: <span class="str">'words'</span> })
 
 <span class="cm">// Later — disconnect all observers + listeners</span>
 sc.<span class="fn">destroy</span>()
@@ -403,6 +458,70 @@ sc.<span class="fn">destroy</span>()
     update()
   }
 
+  // ── Text Reveal ──
+  function splitTextReveal(el, type, hidden) {
+    if (hidden) el.setAttribute('aria-label', el.textContent || '')
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+      acceptNode: node => /\S/.test(node.textContent || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
+    })
+    const textNodes = []
+    let current = walker.nextNode()
+    while (current) {
+      textNodes.push(current)
+      current = walker.nextNode()
+    }
+    const spans = []
+    textNodes.forEach(textNode => {
+      const parts = type === 'letters' ? [...textNode.data] : textNode.data.match(/\S+|\s+/g) || []
+      const fragment = document.createDocumentFragment()
+      parts.forEach(part => {
+        const node = /\s/.test(part) ? document.createTextNode(part) : document.createElement('span')
+        if (node.nodeType === 1) {
+          node.textContent = part
+          node.style.display = 'inline-block'
+          node.style.opacity = '0'
+          node.style.transform = 'translateY(0.75em)'
+          node.style.willChange = 'opacity, transform'
+          if (hidden) node.setAttribute('aria-hidden', 'true')
+          spans.push(node)
+        }
+        fragment.appendChild(node)
+      })
+      textNode.parentNode.replaceChild(fragment, textNode)
+    })
+    return spans
+  }
+
+  function animateTextReveal(selector, { type = 'words', stagger = 40, duration = 600 } = {}) {
+    const states = [...document.querySelectorAll(selector)].map(el => ({
+      el,
+      spans: splitTextReveal(el, type, el.children.length === 0),
+    }))
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return
+        const state = states.find(s => s.el === entry.target)
+        if (!state) return
+        state.spans.forEach((span, index) => {
+          const start = performance.now() + index * stagger
+          function step(now) {
+            if (now < start) { requestAnimationFrame(step); return }
+            const p = Math.min(1, (now - start) / duration)
+            const e = ease.cubicOut(p)
+            span.style.opacity = e
+            span.style.transform = `translateY(${(1 - e) * 0.75}em)`
+            if (p < 1) requestAnimationFrame(step)
+            else { span.style.opacity = '1'; span.style.transform = 'none'; span.style.willChange = 'auto' }
+          }
+          requestAnimationFrame(step)
+        })
+        entry.target.classList.add('sc-in')
+        obs.unobserve(entry.target)
+      })
+    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' })
+    states.forEach(state => obs.observe(state.el))
+  }
+
   // ── Init ──
   revealEls(document.querySelectorAll('.js-reveal'))
   revealEls(document.querySelectorAll('.js-reveal--left'),  { direction: 'left',  distance: '40px', easeFn: ease.elasticOut })
@@ -410,6 +529,8 @@ sc.<span class="fn">destroy</span>()
   revealEls(document.querySelectorAll('.js-reveal--down'),  { direction: 'down',  distance: '32px', easeFn: ease.backOut })
   animateCounters()
   animateProgress()
+  animateTextReveal('.js-text-reveal')
+  animateTextReveal('.js-text-reveal-letters', { type: 'letters', stagger: 18 })
 </script>
 
 </body>

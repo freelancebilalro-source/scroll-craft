@@ -56,6 +56,7 @@ const sc = new ScrollCraft()
 sc.reveal('.card')
   .counter('[data-count]', { duration: 1400 })
   .progress('#timeline .step')
+  .textReveal('.headline')
 ```
 
 ---
@@ -124,6 +125,34 @@ progress('#timeline .step', {
 </div>
 ```
 
+### Text Reveal
+
+Split text into word or letter spans and reveal each piece with a staggered scroll animation.
+
+```ts
+import { textReveal } from 'scroll-craft'
+
+textReveal('.headline', {
+  type: 'words',
+  stagger: 40,
+  duration: 600,
+  ease: 'cubicOut',
+  threshold: 0.12,
+  rootMargin: '0px 0px -10% 0px',
+  once: true,
+  inClass: 'sc-in',
+})
+```
+
+```ts
+textReveal('.eyebrow', {
+  type: 'letters',
+  stagger: 18,
+})
+```
+
+The effect splits text nodes instead of replacing nested elements wholesale, so inline semantics such as links and emphasis stay in place where possible. Plain-text targets get an accessible label while animation spans are hidden from assistive technology.
+
 ---
 
 ## Chainable API
@@ -138,6 +167,7 @@ const sc = new ScrollCraft()
 sc.reveal('.hero-text', { delay: 100, direction: 'up' })
   .counter('[data-count]', { duration: 1200 })
   .progress('#timeline .step')
+  .textReveal('.headline', { type: 'words' })
 
 // Clean up
 sc.destroy()
@@ -179,6 +209,19 @@ sc.destroy()
 | `end` | `number` | `0.2` | Viewport fraction where fill ends |
 | `fillSelector` | `string` | `'.sc-fill'` | Child element to animate |
 
+### `textReveal(target, options?)`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `type` | `'words' \| 'letters'` | `'words'` | Split text by words or letters |
+| `stagger` | `number` | `40` | Delay between each word/letter animation (ms) |
+| `duration` | `number` | `600` | Animation duration per word/letter (ms) |
+| `ease` | `EaseName \| EaseFn` | `'cubicOut'` | Easing function |
+| `threshold` | `number` | `0.12` | Visible fraction before trigger |
+| `rootMargin` | `string` | `'0px 0px -10% 0px'` | Observer root margin |
+| `once` | `boolean` | `true` | Unobserve after first reveal |
+| `inClass` | `string` | `'sc-in'` | Class added when in view |
+
 ---
 
 ## Easing Functions
@@ -205,7 +248,7 @@ You can also pass a custom function: `ease: (t) => t * t`
 scroll-craft/
 ├── src/
 │   ├── index.ts      — ScrollCraft class + re-exports
-│   ├── effects.ts    — reveal, counter, progress
+│   ├── effects.ts    — reveal, counter, progress, textReveal
 │   └── easing.ts     — easing functions
 ├── dist/             — built output (ESM + CJS + .d.ts)
 ├── demo/
@@ -230,7 +273,7 @@ npm run typecheck
 
 ## Roadmap
 
-- [ ] Text reveal (word / letter animations)
+- [x] Text reveal (word / letter animations)
 - [ ] Sticky scroll sections
 - [ ] Horizontal scroll support
 - [ ] SVG path drawing

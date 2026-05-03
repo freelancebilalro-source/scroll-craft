@@ -1,7 +1,7 @@
 {
   "name": "scroll-craft",
   "version": "0.1.0",
-  "description": "Tiny TypeScript scroll animation library — reveal, counter, and progress effects with zero dependencies",
+  "description": "Tiny TypeScript scroll animation library — reveal, counter, progress, and text reveal effects with zero dependencies",
   "author": "Bilal <hello@bilalstudio.io>",
   "license": "MIT",
   "homepage": "https://github.com/Bilal-Studios/scroll-craft#readme",
@@ -16,6 +16,7 @@
     "reveal",
     "counter",
     "scroll-progress",
+    "text-reveal",
     "typescript",
     "zero-dependency"
   ],
