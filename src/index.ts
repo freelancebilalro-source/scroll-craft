@@ -4,6 +4,7 @@ import {
   counter as _counter,
   parallax as _parallax,
   progress as _progress,
+  scene as _scene,
   scrollProgress as _scrollProgress,
   stagger as _stagger,
   textReveal as _textReveal,
@@ -13,16 +14,19 @@ import {
   type CounterOptions,
   type ParallaxOptions,
   type ProgressOptions,
+  type SceneOptions,
+  type SceneStep,
+  type SceneValues,
   type ScrollProgressOptions,
   type StaggerOptions,
   type TextRevealOptions,
   type ZoomOptions,
 } from './effects'
 
-export type { BlurRevealOptions, RevealOptions, CounterOptions, ParallaxOptions, ProgressOptions, ScrollProgressOptions, StaggerOptions, TextRevealOptions, ZoomOptions, Direction } from './effects'
+export type { BlurRevealOptions, RevealOptions, CounterOptions, ParallaxOptions, ProgressOptions, SceneOptions, SceneStep, SceneValues, ScrollProgressOptions, StaggerOptions, TextRevealOptions, ZoomOptions, Direction } from './effects'
 export type { EaseName, EaseFn } from './easing'
 export { easings, resolveEase } from './easing'
-export { blurReveal, reveal, counter, parallax, progress, scrollProgress, stagger, textReveal, zoom } from './effects'
+export { blurReveal, reveal, counter, parallax, progress, scene, scrollProgress, stagger, textReveal, zoom } from './effects'
 
 // ─── Class API ────────────────────────────────────────────────────────────────
 
@@ -38,6 +42,7 @@ type Target = string | Element | NodeList | Element[]
  *   .counter('[data-count]', { duration: 1200 })
  *   .parallax('.hero-orb')
  *   .progress('#timeline .step')
+ *   .scene('.story', [{ target: '.title', from: { opacity: 0 }, to: { opacity: 1 } }])
  *   .scrollProgress('.scroll-progress')
  *   .stagger('.feature-grid')
  *   .textReveal('.headline')
@@ -68,6 +73,11 @@ export class ScrollCraft {
 
   progress(target: Target, options?: ProgressOptions): this {
     this.cleanups.push(_progress(target, options))
+    return this
+  }
+
+  scene(target: Target, steps: SceneStep[], options?: SceneOptions): this {
+    this.cleanups.push(_scene(target, steps, options))
     return this
   }
 

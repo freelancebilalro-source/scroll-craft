@@ -244,6 +244,71 @@
       line-height: 1.7;
     }
 
+    /* scene */
+    .scene-stage {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 0.88fr;
+      gap: 24px;
+      align-items: stretch;
+      min-height: 420px;
+    }
+    .scene-visual {
+      position: relative;
+      min-height: 360px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at 24% 20%, rgba(0,255,209,0.2), transparent 30%),
+        radial-gradient(circle at 74% 82%, rgba(255,0,200,0.18), transparent 28%),
+        linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+    }
+    .scene-image {
+      position: absolute;
+      inset: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, rgba(0,255,209,0.94), rgba(255,209,102,0.9)),
+        repeating-linear-gradient(45deg, rgba(4,4,15,0.18) 0 10px, transparent 10px 20px);
+      color: #06110f;
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(4rem, 12vw, 8rem);
+      font-weight: 900;
+      box-shadow: 0 30px 90px rgba(0,255,209,0.16);
+      will-change: transform, opacity;
+    }
+    .scene-copy {
+      display: grid;
+      align-content: center;
+      gap: 18px;
+    }
+    .scene-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.8rem, 8vw, 5.8rem);
+      font-weight: 900;
+      line-height: 0.92;
+      letter-spacing: -0.055em;
+      will-change: transform, opacity;
+    }
+    .scene-card {
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.025));
+      color: #bdbdd1;
+      line-height: 1.7;
+      transform-origin: left center;
+      will-change: transform, opacity;
+    }
+    @media (max-width: 760px) {
+      .scene-stage { grid-template-columns: 1fr; }
+      .scene-visual { min-height: 300px; }
+      .scene-image { inset: 30px; }
+    }
+
     /* code */
     .code-block { background: var(--bg-alt); border: 1px solid rgba(0,255,209,0.12); border-radius: 12px; padding: 22px 26px; font-family: 'Space Mono', monospace; font-size: 0.78rem; line-height: 1.8; color: #a0a0b8; overflow-x: auto; margin-top: 28px; }
     .code-block .kw { color: var(--magenta); }
@@ -264,7 +329,7 @@
   <div class="hero-inner">
     <p class="hero-eyebrow js-reveal">scroll-craft v0.1</p>
     <h1 class="js-reveal" style="--delay:80">Scroll<br/><em>animation</em><br/>that ships.</h1>
-    <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. Reveals, counters, progress fills, staggers, zooms, parallax, and text reveals — in TypeScript.</p>
+    <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. Reveals, counters, progress fills, staggers, zooms, parallax, scenes, and text reveals — in TypeScript.</p>
     <div class="badge-row js-reveal" style="--delay:240">
       <span class="badge">0 dependencies</span>
       <span class="badge">~4KB minified</span>
@@ -491,6 +556,32 @@
 })</div>
 </section>
 
+<!-- Scene -->
+<section class="snap-section" id="s-scene">
+  <div class="section-head">
+    <span class="label">Effect 10 — Scene</span>
+    <button class="replay-btn" data-replay="scene"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>UPDATE</button>
+  </div>
+  <h2>Scene</h2>
+  <p class="desc">Scrub a section timeline from progress 0 to 1 as the section top travels through the viewport.</p>
+  <div class="scene-stage story-scene" id="scene-demo">
+    <div class="scene-copy">
+      <h3 class="scene-title">Scroll-driven story beats.</h3>
+      <p class="scene-card">The title fades in, the image slides upward, and this card rotates into alignment from the same section progress value.</p>
+    </div>
+    <div class="scene-visual">
+      <div class="scene-image">SC</div>
+    </div>
+  </div>
+  <div class="code-block"><span class="kw">import</span> { <span class="fn">scene</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">scene</span>(<span class="str">'.story'</span>, [
+  { target: <span class="str">'.title'</span>, from: { opacity: 0 }, to: { opacity: 1 } },
+  { target: <span class="str">'.image'</span>, from: { y: 80 }, to: { y: 0 } },
+  { target: <span class="str">'.card'</span>, from: { rotate: -8 }, to: { rotate: 0 } },
+])</div>
+</section>
+
 <footer>
   <p>Built by <a href="https://bilalstudio.io">Bilal Studio</a> · <a href="https://github.com/Bilal-Studios/scroll-craft">GitHub</a> · <a href="https://npmjs.com/package/scroll-craft">npm</a></p>
 </footer>
@@ -709,6 +800,91 @@
 
   restartScrollProgress()
 
+  function createScene(sectionSelector, steps, { start = 0.9, end = 0.1, easeFn = easeFns.cubicOut } = {}) {
+    const sections = [...document.querySelectorAll(sectionSelector)]
+    const states = sections.map(section => ({
+      section,
+      visible: true,
+      top: 0,
+      steps: steps.flatMap(step => [...section.querySelectorAll(step.target)].map(el => ({
+        el,
+        from: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, ...step.from },
+        to: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, ...step.to },
+      }))),
+    })).filter(state => state.steps.length)
+    let frame = 0
+
+    function progressForTop(top) {
+      const startPx = window.innerHeight * start
+      const endPx = window.innerHeight * end
+      return Math.min(1, Math.max(0, (startPx - top) / (startPx - endPx)))
+    }
+
+    function mix(a, b, p) {
+      return a + (b - a) * p
+    }
+
+    function writeStep(step, progress) {
+      const p = easeFn(progress)
+      const opacity = mix(step.from.opacity, step.to.opacity, p)
+      const x = mix(step.from.x, step.to.x, p)
+      const y = mix(step.from.y, step.to.y, p)
+      const scale = mix(step.from.scale, step.to.scale, p)
+      const rotate = mix(step.from.rotate, step.to.rotate, p)
+      step.el.style.opacity = opacity
+      step.el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale}) rotate(${rotate}deg)`
+      step.el.style.willChange = 'opacity, transform'
+    }
+
+    function update() {
+      frame = 0
+      states.forEach(state => {
+        const rect = state.section.getBoundingClientRect()
+        state.top = rect.top
+        const progress = progressForTop(state.top)
+        if (!(state.visible || progress === 0 || progress === 1)) return
+        state.steps.forEach(step => writeStep(step, progress))
+      })
+    }
+
+    function schedule() {
+      if (frame) return
+      frame = requestAnimationFrame(update)
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        const state = states.find(item => item.section === entry.target)
+        if (state) state.visible = entry.isIntersecting
+      })
+      schedule()
+    })
+    states.forEach(state => observer.observe(state.section))
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    schedule()
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      observer.disconnect()
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+    }
+  }
+
+  let stopScene = () => {}
+
+  function restartScene() {
+    stopScene()
+    stopScene = createScene('#scene-demo', [
+      { target: '.scene-title', from: { opacity: 0, y: 32 }, to: { opacity: 1, y: 0 } },
+      { target: '.scene-image', from: { y: 80, scale: 0.92 }, to: { y: 0, scale: 1 } },
+      { target: '.scene-card', from: { opacity: 0.25, x: -20, rotate: -8 }, to: { opacity: 1, x: 0, rotate: 0 } },
+    ])
+  }
+
+  restartScene()
+
   // ── Text reveal split + animate
   const trStates = new Map()
 
@@ -856,6 +1032,9 @@
     },
     'scroll-progress'() {
       restartScrollProgress()
+    },
+    scene() {
+      restartScene()
     },
   }
 

@@ -65,6 +65,38 @@ export interface ScrollProgressOptions {
   container?: Element | Window
 }
 
+export type SceneValues = {
+  opacity?: number
+  x?: number
+  y?: number
+  scale?: number
+  rotate?: number
+}
+
+export interface SceneStep {
+  /** Selector resolved inside each scene section, or direct target element(s). */
+  target: string | Element | NodeList | Element[]
+  /** Values at progress 0. */
+  from: SceneValues
+  /** Values at progress 1. */
+  to: SceneValues
+}
+
+export interface SceneOptions {
+  /**
+   * Viewport fraction (0–1) where timeline progress starts.
+   * 0.9 means "when the section top hits 90% down the viewport". Default: 0.9
+   */
+  start?: number
+  /**
+   * Viewport fraction (0–1) where timeline progress ends.
+   * 0.1 means "when the section top hits 10% down the viewport". Default: 0.1
+   */
+  end?: number
+  /** Easing function name or custom fn. Default: 'linear' */
+  ease?: EaseName | EaseFn
+}
+
 export interface TextRevealOptions {
   /** Split animation by words or individual letters. Default: 'words' */
   type?: 'words' | 'letters'
@@ -198,6 +230,41 @@ function transformForProgress(direction: Direction, distance: string, progress: 
   }
 }
 
+function resolveSceneStepElements(section: Element, target: SceneStep['target']): HTMLElement[] {
+  if (typeof target === 'string') return Array.from(section.querySelectorAll(target)) as HTMLElement[]
+  if (target instanceof Element) return [target as HTMLElement]
+  return Array.from(target as NodeList) as HTMLElement[]
+}
+
+function sceneDefaultValue(property: keyof SceneValues): number {
+  if (property === 'opacity' || property === 'scale') return 1
+  return 0
+}
+
+function normalizeSceneValues(from: SceneValues, to: SceneValues): { from: Required<SceneValues>, to: Required<SceneValues> } {
+  const properties: Array<keyof SceneValues> = ['opacity', 'x', 'y', 'scale', 'rotate']
+  const normalizedFrom = {} as Required<SceneValues>
+  const normalizedTo = {} as Required<SceneValues>
+
+  properties.forEach((property) => {
+    const fallback = sceneDefaultValue(property)
+    const fromValue = from[property]
+    const toValue = to[property]
+    normalizedFrom[property] = fromValue ?? toValue ?? fallback
+    normalizedTo[property] = toValue ?? fromValue ?? fallback
+  })
+
+  return { from: normalizedFrom, to: normalizedTo }
+}
+
+function interpolate(from: number, to: number, progress: number): number {
+  return from + ((to - from) * progress)
+}
+
+function sceneTransform(values: Required<SceneValues>): string {
+  return `translate3d(${values.x}px, ${values.y}px, 0) scale(${values.scale}) rotate(${values.rotate}deg)`
+}
+
 type StaggerChildState = {
   element: HTMLElement
   opacity: string
@@ -253,6 +320,23 @@ type ScrollProgressElementState = {
   width: string
   height: string
   willChange: string
+}
+
+type SceneStepElementState = {
+  element: HTMLElement
+  opacity: string
+  transform: string
+  willChange: string
+  from: Required<SceneValues>
+  to: Required<SceneValues>
+}
+
+type SceneElementState = {
+  section: HTMLElement
+  top: number
+  height: number
+  visible: boolean
+  steps: SceneStepElementState[]
 }
 
 type LegacyMediaQueryList = MediaQueryList & {
@@ -686,6 +770,189 @@ export function scrollProgress(
       state.element.style.width = state.width
       state.element.style.height = state.height
       state.element.style.willChange = state.willChange
+    })
+  }
+}
+
+// ─── scene ───────────────────────────────────────────────────────────────────
+
+/**
+ * Creates a scroll-driven scene timeline for each section.
+ * Step selectors are resolved inside each scene section.
+ *
+ * @example
+ * const stop = scene('.story', [
+ *   { target: '.title', from: { opacity: 0 }, to: { opacity: 1 } },
+ *   { target: '.image', from: { y: 80 }, to: { y: 0 } },
+ * ])
+ */
+export function scene(
+  target: string | Element | NodeList | Element[],
+  steps: SceneStep[],
+  options: SceneOptions = {},
+): () => void {
+  const {
+    start = 0.9,
+    end = 0.1,
+    ease = 'linear',
+  } = options
+
+  const sections = resolveElements(target) as HTMLElement[]
+  if (!sections.length || !steps.length) return () => {}
+
+  const easeFn = resolveEase(ease)
+  const reduceMotion = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null
+  let rafId: number | null = null
+  let observer: IntersectionObserver | null = null
+
+  const states = sections.map<SceneElementState>((section) => {
+    const stepStates = steps.reduce<SceneStepElementState[]>((acc, step) => {
+      const normalized = normalizeSceneValues(step.from, step.to)
+      const targetStates = resolveSceneStepElements(section, step.target).map<SceneStepElementState>((element) => ({
+        element,
+        opacity: element.style.opacity,
+        transform: element.style.transform,
+        willChange: element.style.willChange,
+        from: normalized.from,
+        to: normalized.to,
+      }))
+      acc.push(...targetStates)
+      return acc
+    }, [])
+
+    return {
+      section,
+      top: 0,
+      height: 0,
+      visible: !('IntersectionObserver' in window),
+      steps: stepStates,
+    }
+  }).filter((state) => state.steps.length > 0)
+
+  if (!states.length) return () => {}
+
+  function progressForTop(top: number): number {
+    const startPx = window.innerHeight * start
+    const endPx = window.innerHeight * end
+    if (startPx === endPx) return top <= endPx ? 1 : 0
+    return Math.min(1, Math.max(0, (startPx - top) / (startPx - endPx)))
+  }
+
+  function applyStep(state: SceneStepElementState, progress: number): void {
+    const eased = easeFn(progress)
+    const values: Required<SceneValues> = {
+      opacity: interpolate(state.from.opacity, state.to.opacity, eased),
+      x: interpolate(state.from.x, state.to.x, eased),
+      y: interpolate(state.from.y, state.to.y, eased),
+      scale: interpolate(state.from.scale, state.to.scale, eased),
+      rotate: interpolate(state.from.rotate, state.to.rotate, eased),
+    }
+
+    state.element.style.opacity = String(values.opacity)
+    state.element.style.transform = sceneTransform(values)
+    state.element.style.willChange = 'opacity, transform'
+  }
+
+  function applyProgress(progress: number): void {
+    states.forEach((state) => {
+      state.steps.forEach((step) => applyStep(step, progress))
+    })
+  }
+
+  function measure(): void {
+    const scrollY = window.scrollY || window.pageYOffset
+    states.forEach((state) => {
+      const rect = state.section.getBoundingClientRect()
+      state.top = rect.top
+      state.height = rect.height
+      if (!observer) state.visible = rect.bottom >= 0 && rect.top <= window.innerHeight
+      if (scrollY === 0 && rect.top > window.innerHeight) state.visible = true
+    })
+  }
+
+  function write(): void {
+    rafId = null
+
+    if (reduceMotion?.matches) {
+      applyProgress(1)
+      return
+    }
+
+    states.forEach((state) => {
+      const progress = progressForTop(state.top)
+      const isRelevant = state.visible || progress === 0 || progress === 1
+      if (!isRelevant) return
+      state.steps.forEach((step) => applyStep(step, progress))
+    })
+  }
+
+  function schedule(): void {
+    if (rafId !== null) return
+    rafId = requestAnimationFrame(() => {
+      measure()
+      write()
+    })
+  }
+
+  function handleMotionChange(): void {
+    schedule()
+  }
+
+  states.forEach((state) => {
+    state.steps.forEach((step) => {
+      step.element.style.willChange = 'opacity, transform'
+    })
+  })
+
+  if ('IntersectionObserver' in window) {
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const state = states.find((item) => item.section === entry.target)
+        if (!state) return
+        state.visible = entry.isIntersecting
+      })
+      schedule()
+    })
+    states.forEach((state) => observer?.observe(state.section))
+  }
+
+  schedule()
+  window.addEventListener('scroll', schedule, { passive: true })
+  window.addEventListener('resize', schedule)
+
+  if (reduceMotion) {
+    if ('addEventListener' in reduceMotion) {
+      reduceMotion.addEventListener('change', handleMotionChange)
+    } else {
+      const legacyReduceMotion = reduceMotion as LegacyMediaQueryList
+      legacyReduceMotion.addListener?.(handleMotionChange)
+    }
+  }
+
+  return () => {
+    if (rafId !== null) cancelAnimationFrame(rafId)
+    rafId = null
+    observer?.disconnect()
+    window.removeEventListener('scroll', schedule)
+    window.removeEventListener('resize', schedule)
+
+    if (reduceMotion) {
+      if ('removeEventListener' in reduceMotion) {
+        reduceMotion.removeEventListener('change', handleMotionChange)
+      } else {
+        const legacyReduceMotion = reduceMotion as LegacyMediaQueryList
+        legacyReduceMotion.removeListener?.(handleMotionChange)
+      }
+    }
+
+    states.forEach((state) => {
+      state.steps.forEach((step) => {
+        step.element.style.opacity = step.opacity
+        step.element.style.transform = step.transform
+        step.element.style.willChange = step.willChange
+      })
     })
   }
 }

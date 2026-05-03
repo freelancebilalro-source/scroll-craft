@@ -58,6 +58,10 @@ sc.reveal('.card')
   .counter('[data-count]', { duration: 1400 })
   .parallax('.hero-orb')
   .progress('#timeline .step')
+  .scene('.story', [
+    { target: '.title', from: { opacity: 0 }, to: { opacity: 1 } },
+    { target: '.image', from: { y: 80 }, to: { y: 0 } },
+  ])
   .scrollProgress('.page-progress', { axis: 'y', property: 'width' })
   .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline')
@@ -196,6 +200,45 @@ scrollProgress('.page-progress', {
 
 Use `property: 'scale'` for transform-based indicators. With `axis: 'x'`, ScrollCraft writes `scaleX(...)`; with `axis: 'y'`, it writes `scaleY(...)`.
 
+### Scene
+
+Create a scroll-driven timeline for a section, similar to a scrubbed ScrollTrigger scene.
+
+```ts
+import { scene } from 'scroll-craft'
+
+scene('.story', [
+  { target: '.title', from: { opacity: 0 }, to: { opacity: 1 } },
+  { target: '.image', from: { y: 80 }, to: { y: 0 } },
+  { target: '.card', from: { rotate: -8 }, to: { rotate: 0 } },
+], {
+  start: 0.9,
+  end: 0.1,
+  ease: 'cubicOut',
+})
+```
+
+Progress is based on the section top:
+
+```txt
+progress 0 = section top hits start * viewport height
+progress 1 = section top hits end * viewport height
+```
+
+With the defaults, the timeline starts when the section top reaches 90% down the viewport and finishes when it reaches 10% down the viewport. Step selectors are resolved inside each matching section, so the same scene definition can be reused across multiple sections.
+
+Supported animated values:
+
+| Value | Output |
+|---|---|
+| `opacity` | Inline opacity |
+| `x` | `translate3d(x, y, 0)` in px |
+| `y` | `translate3d(x, y, 0)` in px |
+| `scale` | `scale(...)` |
+| `rotate` | `rotate(...deg)` |
+
+Transforms are combined into one string: `translate3d(x, y, 0) scale(...) rotate(...)`.
+
 ### Text Reveal
 
 Split text into word or letter spans and reveal each piece with a staggered scroll animation.
@@ -288,6 +331,10 @@ sc.reveal('.hero-text', { delay: 100, direction: 'up' })
   .counter('[data-count]', { duration: 1200 })
   .parallax('.hero-orb', { speed: 0.2 })
   .progress('#timeline .step')
+  .scene('.story', [
+    { target: '.title', from: { opacity: 0 }, to: { opacity: 1 } },
+    { target: '.image', from: { y: 80 }, to: { y: 0 } },
+  ])
   .scrollProgress('.page-progress', { axis: 'y', property: 'width' })
   .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline', { type: 'words' })
@@ -364,6 +411,24 @@ sc.destroy()
 | `property` | `'scale' \| 'width' \| 'height'` | `'scale'` | Style strategy used to display progress |
 | `container` | `Element \| Window` | `window` | Scroll container to read from |
 
+### `scene(target, steps, options?)`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `start` | `number` | `0.9` | Viewport fraction where timeline progress begins |
+| `end` | `number` | `0.1` | Viewport fraction where timeline progress completes |
+| `ease` | `EaseName \| EaseFn` | `'linear'` | Easing applied to scroll progress before interpolation |
+
+Each step accepts:
+
+| Field | Type | Description |
+|---|---|---|
+| `target` | `string \| Element \| NodeList \| Element[]` | Element(s) to animate; string selectors are section-relative |
+| `from` | `SceneValues` | Values at progress 0 |
+| `to` | `SceneValues` | Values at progress 1 |
+
+`SceneValues` supports `opacity`, `x`, `y`, `scale`, and `rotate`.
+
 ### `textReveal(target, options?)`
 
 | Option | Type | Default | Description |
@@ -431,7 +496,7 @@ You can also pass a custom function: `ease: (t) => t * t`
 scroll-craft/
 ├── src/
 │   ├── index.ts      — ScrollCraft class + re-exports
-│   ├── effects.ts    — blurReveal, reveal, counter, parallax, progress, scrollProgress, stagger, textReveal, zoom
+│   ├── effects.ts    — blurReveal, reveal, counter, parallax, progress, scene, scrollProgress, stagger, textReveal, zoom
 │   └── easing.ts     — easing functions
 ├── dist/             — built output (ESM + CJS + .d.ts)
 ├── demo/
