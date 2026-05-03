@@ -8,36 +8,54 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;900&family=Outfit:wght@400;500&family=Space+Mono&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:      #04040F;
-      --bg-alt:  #080818;
-      --cyan:    #00FFD1;
-      --magenta: #FF00C8;
-      --gold:    #FFD166;
-      --text:    #E8E8F0;
-      --muted:   #6B6B80;
+      --bg: #04040F; --bg-alt: #080818; --cyan: #00FFD1;
+      --magenta: #FF00C8; --gold: #FFD166; --text: #E8E8F0; --muted: #6B6B80;
     }
-
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; scroll-snap-type: y proximity; }
     body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; overflow-x: hidden; }
 
-    /* ── Layout ── */
-    section { padding: 120px 24px; max-width: 900px; margin: 0 auto; }
-    h2 { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 900; margin-bottom: 16px; }
-    .label { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); margin-bottom: 12px; }
-    .desc { color: var(--muted); font-size: 1rem; line-height: 1.7; max-width: 560px; margin-bottom: 48px; }
-
-    /* ── Hero ── */
-    .hero {
-      min-height: 100vh;
+    /* snap sections */
+    .snap-section {
+      scroll-snap-align: start;
+      min-height: 100svh;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 0 24px;
+      padding: 72px 24px;
       max-width: 900px;
       margin: 0 auto;
+      width: 100%;
     }
+    .hero-wrap {
+      scroll-snap-align: start;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+    .hero-inner { padding: 0 24px; max-width: 900px; margin: 0 auto; width: 100%; }
+
+    h2 { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 900; margin-bottom: 14px; }
+    .desc { color: var(--muted); font-size: 1rem; line-height: 1.7; max-width: 560px; margin-bottom: 36px; }
+
+    /* section header */
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .label { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); }
+
+    /* replay button */
+    .replay-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border: 1px solid rgba(0,255,209,0.25); border-radius: 99px;
+      background: transparent; color: var(--cyan);
+      font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.1em;
+      cursor: pointer; transition: background 0.2s, border-color 0.2s; flex-shrink: 0;
+    }
+    .replay-btn:hover { background: rgba(0,255,209,0.08); border-color: rgba(0,255,209,0.5); }
+    .replay-btn svg { width: 12px; height: 12px; }
+
+    /* hero */
     .hero-eyebrow { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase; margin-bottom: 24px; }
     .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(3rem, 10vw, 6.5rem); font-weight: 900; line-height: 0.95; margin-bottom: 32px; }
     .hero h1 em { font-style: normal; color: var(--cyan); }
@@ -46,973 +64,475 @@
     .badge { display: inline-block; padding: 6px 14px; border: 1px solid rgba(0,255,209,0.25); border-radius: 99px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--cyan); }
     .scroll-hint { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; font-family: 'Space Mono', monospace; letter-spacing: 0.1em; animation: bounce 2s ease-in-out infinite; }
     .scroll-hint::before { content: ''; width: 1px; height: 48px; background: linear-gradient(var(--cyan), transparent); }
-    @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(8px); } }
+    @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)} }
 
-    /* ── Divider ── */
-    .divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(0,255,209,0.2), transparent); }
-
-    /* ── Reveal demo ── */
-    .reveal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-    .reveal-card {
-      background: var(--bg-alt);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      padding: 28px 24px;
-      transition: border-color 0.3s;
-    }
+    /* reveal */
+    .reveal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .reveal-card { background: var(--bg-alt); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 28px 24px; transition: border-color 0.3s; }
     .reveal-card:hover { border-color: rgba(0,255,209,0.3); }
-    .card-icon { font-size: 2rem; margin-bottom: 16px; }
+    .card-icon { font-size: 2rem; margin-bottom: 14px; }
     .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; }
     .card-text { color: var(--muted); font-size: 0.875rem; line-height: 1.6; }
 
-    /* ── Counter demo ── */
-    .counter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1px; background: rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; }
-    .counter-cell { background: var(--bg-alt); padding: 40px 32px; }
+    /* counter */
+    .counter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1px; background: rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; }
+    .counter-cell { background: var(--bg-alt); padding: 36px 28px; }
     .counter-value { font-family: 'Syne', sans-serif; font-size: clamp(2.5rem, 7vw, 4rem); font-weight: 900; color: var(--cyan); line-height: 1; margin-bottom: 8px; }
-    .counter-suffix { display: inline; font-size: 0.6em; color: var(--magenta); }
+    .counter-suffix { font-size: 0.6em; color: var(--magenta); }
     .counter-label { color: var(--muted); font-size: 0.8rem; font-family: 'Space Mono', monospace; letter-spacing: 0.1em; }
 
-    /* ── Progress / Timeline demo ── */
-    .timeline { display: grid; gap: 1rem; }
-    .step { min-height: 18rem; padding: 40px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    /* progress */
+    .timeline { display: grid; gap: 0; }
+    .step { padding: 28px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
     .step:last-child { border-bottom: none; }
-    .step-num-wrap {
-      display: block;
-      position: relative;
-      margin-bottom: 2rem;
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(3.5rem, 10vw, 5.5rem);
-      font-weight: 900;
-      line-height: 0.85;
-      user-select: none;
-    }
-    .step-num-ghost {
-      display: block;
-      color: transparent;
-      -webkit-text-stroke: 1px rgba(255,255,255,0.15);
-    }
-    .sc-fill {
-      position: absolute;
-      inset: 0;
-      display: block;
-      color: var(--cyan);
-      text-shadow: 0 0 24px rgba(0, 255, 209, 0.5);
-      clip-path: inset(0 100% 0 0);
-      transition: clip-path 0.1s linear;
-      will-change: clip-path;
-    }
-    .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 12px; }
-    .step-text { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
+    .step-num-wrap { display: block; position: relative; margin-bottom: 1.2rem; font-family: 'Syne', sans-serif; font-size: clamp(2.8rem, 8vw, 5rem); font-weight: 900; line-height: 0.85; user-select: none; }
+    .step-num-ghost { display: block; color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.15); }
+    .sc-fill { position: absolute; inset: 0; display: block; color: var(--cyan); text-shadow: 0 0 24px rgba(0,255,209,0.5); clip-path: inset(0 100% 0 0); transition: clip-path 0.1s linear; will-change: clip-path; }
+    .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.2rem; margin-bottom: 6px; }
+    .step-text { color: var(--muted); font-size: 0.88rem; line-height: 1.7; }
 
-    /* ── Text reveal demo ── */
-    .text-reveal-showcase {
-      display: grid;
-      gap: 28px;
-      padding: 34px;
-      background:
-        radial-gradient(circle at top left, rgba(0,255,209,0.16), transparent 35%),
-        linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border: 1px solid rgba(0,255,209,0.14);
-      border-radius: 22px;
-      overflow: hidden;
-    }
-    .text-reveal-line {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(2.25rem, 7vw, 4.7rem);
-      font-weight: 900;
-      line-height: 0.95;
-      letter-spacing: -0.04em;
-    }
+    /* text reveal */
+    .text-reveal-showcase { display: grid; gap: 28px; padding: 34px; background: radial-gradient(circle at top left, rgba(0,255,209,0.16), transparent 35%), linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border: 1px solid rgba(0,255,209,0.14); border-radius: 22px; overflow: hidden; }
+    .text-reveal-line { font-family: 'Syne', sans-serif; font-size: clamp(2.25rem, 7vw, 4.7rem); font-weight: 900; line-height: 0.95; letter-spacing: -0.04em; }
     .text-reveal-line em { color: var(--cyan); font-style: normal; }
-    .text-reveal-note {
-      max-width: 620px;
-      color: #9696aa;
-      font-size: 1rem;
-      line-height: 1.7;
-    }
+    .text-reveal-note { max-width: 620px; color: #9696aa; font-size: 1rem; line-height: 1.7; }
 
-    /* ── Stagger demo ── */
-    .stagger-board {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-    }
-    .stagger-tile {
-      min-height: 150px;
-      padding: 24px;
-      background:
-        linear-gradient(160deg, rgba(0,255,209,0.12), rgba(255,0,200,0.08)),
-        var(--bg-alt);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 18px;
-    }
-    .stagger-kicker {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.14em;
-      color: var(--gold);
-      text-transform: uppercase;
-      margin-bottom: 18px;
-    }
-    .stagger-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.25rem;
-      font-weight: 900;
-      margin-bottom: 8px;
-    }
+    /* stagger */
+    .stagger-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+    .stagger-tile { padding: 24px; background: linear-gradient(160deg, rgba(0,255,209,0.12), rgba(255,0,200,0.08)), var(--bg-alt); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; }
+    .stagger-kicker { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--gold); text-transform: uppercase; margin-bottom: 16px; }
+    .stagger-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 900; margin-bottom: 8px; }
     .stagger-copy { color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
 
-    /* ── Blur reveal demo ── */
-    .blur-panel {
-      position: relative;
-      padding: clamp(32px, 7vw, 64px);
-      min-height: 360px;
-      display: grid;
-      align-content: end;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 78% 20%, rgba(255,209,102,0.22), transparent 28%),
-        radial-gradient(circle at 18% 20%, rgba(0,255,209,0.18), transparent 30%),
-        linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 28px;
-    }
-    .blur-orb {
-      position: absolute;
-      width: 220px;
-      height: 220px;
-      right: -40px;
-      top: -50px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, var(--cyan), var(--magenta));
-      filter: blur(20px);
-      opacity: 0.24;
-    }
-    .blur-title {
-      position: relative;
-      max-width: 660px;
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(2.4rem, 8vw, 5.3rem);
-      font-weight: 900;
-      line-height: 0.94;
-      letter-spacing: -0.05em;
-      margin-bottom: 18px;
-    }
-    .blur-copy {
-      position: relative;
-      max-width: 560px;
-      color: #aaaabe;
-      line-height: 1.7;
-    }
+    /* blur reveal */
+    .blur-panel { position: relative; padding: clamp(32px, 7vw, 64px); min-height: 260px; display: grid; align-content: end; overflow: hidden; background: radial-gradient(circle at 78% 20%, rgba(255,209,102,0.22), transparent 28%), radial-gradient(circle at 18% 20%, rgba(0,255,209,0.18), transparent 30%), linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.1); border-radius: 28px; }
+    .blur-orb { position: absolute; width: 220px; height: 220px; right: -40px; top: -50px; border-radius: 999px; background: linear-gradient(135deg, var(--cyan), var(--magenta)); filter: blur(20px); opacity: 0.24; }
+    .blur-title { position: relative; font-family: 'Syne', sans-serif; font-size: clamp(2.4rem, 8vw, 5rem); font-weight: 900; line-height: 0.94; letter-spacing: -0.05em; margin-bottom: 16px; }
+    .blur-copy { position: relative; max-width: 560px; color: #aaaabe; line-height: 1.7; }
 
-    /* ── Zoom demo ── */
-    .zoom-stage {
-      display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-      gap: 22px;
-      align-items: stretch;
-    }
-    .zoom-card {
-      min-height: 280px;
-      padding: 30px;
-      display: grid;
-      align-content: end;
-      background:
-        radial-gradient(circle at 18% 18%, rgba(255,0,200,0.2), transparent 32%),
-        linear-gradient(145deg, rgba(0,255,209,0.11), rgba(255,255,255,0.03));
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      overflow: hidden;
-    }
-    .zoom-card--alt {
-      background:
-        radial-gradient(circle at 80% 20%, rgba(255,209,102,0.25), transparent 30%),
-        linear-gradient(145deg, rgba(255,255,255,0.08), rgba(0,255,209,0.04));
-    }
-    .zoom-number {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(4rem, 12vw, 7.5rem);
-      font-weight: 900;
-      line-height: 0.8;
-      color: var(--cyan);
-      margin-bottom: 28px;
-    }
-    .zoom-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.35rem;
-      font-weight: 900;
-      margin-bottom: 10px;
-    }
-    .zoom-copy { color: var(--muted); line-height: 1.65; }
-    @media (max-width: 720px) {
-      .zoom-stage { grid-template-columns: 1fr; }
-    }
+    /* zoom */
+    .zoom-stage { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 20px; }
+    .zoom-card { min-height: 220px; padding: 28px; display: grid; align-content: end; background: radial-gradient(circle at 18% 18%, rgba(255,0,200,0.2), transparent 32%), linear-gradient(145deg, rgba(0,255,209,0.11), rgba(255,255,255,0.03)); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; overflow: hidden; }
+    .zoom-card--alt { background: radial-gradient(circle at 80% 20%, rgba(255,209,102,0.25), transparent 30%), linear-gradient(145deg, rgba(255,255,255,0.08), rgba(0,255,209,0.04)); }
+    .zoom-number { font-family: 'Syne', sans-serif; font-size: clamp(3.5rem, 10vw, 6rem); font-weight: 900; line-height: 0.8; color: var(--cyan); margin-bottom: 20px; }
+    .zoom-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 900; margin-bottom: 8px; }
+    .zoom-copy { color: var(--muted); line-height: 1.65; font-size: 0.9rem; }
+    @media (max-width: 600px) { .zoom-stage { grid-template-columns: 1fr; } }
 
-    /* ── Parallax demo ── */
-    .parallax-scene {
-      position: relative;
-      min-height: 520px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 30px;
-      background:
-        linear-gradient(180deg, rgba(0,255,209,0.08), transparent 45%),
-        radial-gradient(circle at 18% 22%, rgba(255,0,200,0.2), transparent 25%),
-        var(--bg-alt);
-    }
-    .parallax-layer {
-      position: absolute;
-      border-radius: 999px;
-      pointer-events: none;
-      will-change: transform;
-    }
-    .parallax-layer--one {
-      width: 220px;
-      height: 220px;
-      left: 10%;
-      top: 16%;
-      background: linear-gradient(135deg, var(--cyan), transparent);
-      opacity: 0.32;
-      filter: blur(2px);
-    }
-    .parallax-layer--two {
-      width: 320px;
-      height: 320px;
-      right: -70px;
-      bottom: 4%;
-      background: linear-gradient(135deg, var(--magenta), var(--gold));
-      opacity: 0.18;
-      filter: blur(8px);
-    }
-    .parallax-content {
-      position: relative;
-      z-index: 1;
-      max-width: 560px;
-      padding: clamp(34px, 8vw, 72px);
-      margin-top: 120px;
-    }
-    .parallax-title {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(2.7rem, 8vw, 5rem);
-      font-weight: 900;
-      line-height: 0.94;
-      letter-spacing: -0.05em;
-      margin-bottom: 18px;
-    }
-    .parallax-copy { color: #aaaabe; line-height: 1.7; }
-
-    /* ── Code snippet ── */
-    .code-block {
-      background: var(--bg-alt);
-      border: 1px solid rgba(0,255,209,0.12);
-      border-radius: 12px;
-      padding: 28px 32px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.8rem;
-      line-height: 1.8;
-      color: #a0a0b8;
-      overflow-x: auto;
-      margin-top: 40px;
-    }
-    .code-block .kw  { color: var(--magenta); }
-    .code-block .fn  { color: var(--cyan); }
+    /* code */
+    .code-block { background: var(--bg-alt); border: 1px solid rgba(0,255,209,0.12); border-radius: 12px; padding: 22px 26px; font-family: 'Space Mono', monospace; font-size: 0.78rem; line-height: 1.8; color: #a0a0b8; overflow-x: auto; margin-top: 28px; }
+    .code-block .kw { color: var(--magenta); }
+    .code-block .fn { color: var(--cyan); }
     .code-block .str { color: var(--gold); }
-    .code-block .cm  { color: #444460; }
+    .code-block .cm { color: #444460; }
 
-    /* ── Footer ── */
-    footer { text-align: center; padding: 80px 24px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.04); }
+    /* footer */
+    footer { scroll-snap-align: start; text-align: center; padding: 80px 24px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.04); }
     footer a { color: var(--cyan); text-decoration: none; }
-
-    /* ── Direction demo ── */
-    .direction-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-    .dir-card {
-      background: var(--bg-alt);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px;
-      padding: 24px;
-      text-align: center;
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .dir-card strong { display: block; font-family: 'Syne', sans-serif; font-size: 1rem; color: var(--text); margin-bottom: 6px; }
   </style>
 </head>
 <body>
 
-<!-- ── Hero ─────────────────────────────────────────────────────────────────── -->
-<section class="hero" style="position:relative;">
-  <p class="hero-eyebrow js-reveal">scroll-craft v0.1</p>
-  <h1 class="js-reveal" style="--delay:80">Scroll<br/><em>animation</em><br/>that ships.</h1>
-  <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. IntersectionObserver-powered reveals, animated counters, scroll-progress fills, child staggers, parallax, zooms, and text reveals — all in TypeScript.</p>
-  <div class="badge-row js-reveal" style="--delay:240">
-    <span class="badge">0 dependencies</span>
-    <span class="badge">~4KB minified</span>
-    <span class="badge">TypeScript</span>
-    <span class="badge">Tree-shakeable</span>
+<!-- Hero -->
+<div class="hero-wrap hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow js-reveal">scroll-craft v0.1</p>
+    <h1 class="js-reveal" style="--delay:80">Scroll<br/><em>animation</em><br/>that ships.</h1>
+    <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. Reveals, counters, progress fills, staggers, zooms, and text reveals — in TypeScript.</p>
+    <div class="badge-row js-reveal" style="--delay:240">
+      <span class="badge">0 dependencies</span>
+      <span class="badge">~4KB minified</span>
+      <span class="badge">TypeScript</span>
+      <span class="badge">Tree-shakeable</span>
+    </div>
   </div>
   <div class="scroll-hint">scroll</div>
-</section>
+</div>
 
-<div class="divider"></div>
-
-<!-- ── Reveal ────────────────────────────────────────────────────────────────── -->
-<section id="reveal">
-  <p class="label js-reveal">Effect 01</p>
-  <h2 class="js-reveal" style="--delay:60">Reveal</h2>
-  <p class="desc js-reveal" style="--delay:120">Elements animate into view as they enter the viewport. Configurable direction, distance, duration, and easing.</p>
-
-  <div class="reveal-grid">
-    <div class="js-reveal js-reveal--left reveal-card" style="--delay:0">
-      <div class="card-icon">↑</div>
+<!-- Reveal -->
+<section class="snap-section" id="s-reveal">
+  <div class="section-head">
+    <span class="label">Effect 01 — Reveal</span>
+    <button class="replay-btn" data-replay="reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
+  </div>
+  <h2>Reveal</h2>
+  <p class="desc">Elements animate into view as they enter the viewport. Configurable direction, distance, duration, and easing.</p>
+  <div class="reveal-grid" id="reveal-demo">
+    <div class="reveal-card" data-reveal-dir="left" data-delay="0">
+      <div class="card-icon">←</div>
       <div class="card-title">From left</div>
-      <div class="card-text">Slides in from the left side of the viewport.</div>
+      <div class="card-text">Slides in from the left with an elastic finish.</div>
     </div>
-    <div class="js-reveal reveal-card" style="--delay:80">
-      <div class="card-icon">↕</div>
+    <div class="reveal-card" data-reveal-dir="up" data-delay="80">
+      <div class="card-icon">↑</div>
       <div class="card-title">From bottom</div>
-      <div class="card-text">Default direction — enters from below with cubic easing.</div>
+      <div class="card-text">Default — enters from below with cubic easing.</div>
     </div>
-    <div class="js-reveal js-reveal--right reveal-card" style="--delay:160">
+    <div class="reveal-card" data-reveal-dir="right" data-delay="160">
       <div class="card-icon">→</div>
       <div class="card-title">From right</div>
       <div class="card-text">Slides in from the right with an elastic finish.</div>
     </div>
-    <div class="js-reveal js-reveal--down reveal-card" style="--delay:240">
+    <div class="reveal-card" data-reveal-dir="down" data-delay="240">
       <div class="card-icon">↓</div>
       <div class="card-title">From top</div>
-      <div class="card-text">Falls down from above — good for navigation items.</div>
+      <div class="card-text">Falls down from above — good for nav items.</div>
     </div>
   </div>
+  <div class="code-block"><span class="kw">import</span> { <span class="fn">reveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
-  <div class="code-block js-reveal" style="--delay:80">
-<span class="kw">import</span> { <span class="fn">reveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
-
-<span class="cm">// Simple</span>
-<span class="fn">reveal</span>(<span class="str">'.card'</span>)
-
-<span class="cm">// Configured</span>
 <span class="fn">reveal</span>(<span class="str">'.card'</span>, {
   direction: <span class="str">'left'</span>,
   distance:  <span class="str">'40px'</span>,
   duration:  800,
   ease:      <span class="str">'elasticOut'</span>,
-  delay:     120,
-})
-  </div>
+})</div>
 </section>
 
-<div class="divider"></div>
-
-<!-- ── Counter ───────────────────────────────────────────────────────────────── -->
-<section id="counter">
-  <p class="label js-reveal">Effect 02</p>
-  <h2 class="js-reveal" style="--delay:60">Counter</h2>
-  <p class="desc js-reveal" style="--delay:120">Animate any numeric value from zero. Scroll back up and down to replay.</p>
-
-  <div class="counter-grid js-reveal" style="--delay:80">
-    <div class="counter-cell">
-      <div class="counter-value"><span data-count="94">0</span><span class="counter-suffix">%</span></div>
-      <div class="counter-label">client satisfaction</div>
-    </div>
-    <div class="counter-cell">
-      <div class="counter-value"><span data-count="40">0</span><span class="counter-suffix">+</span></div>
-      <div class="counter-label">projects shipped</div>
-    </div>
-    <div class="counter-cell">
-      <div class="counter-value"><span data-count="3">0</span><span class="counter-suffix">K</span></div>
-      <div class="counter-label">lines extracted</div>
-    </div>
-    <div class="counter-cell">
-      <div class="counter-value"><span data-count="0">0</span></div>
-      <div class="counter-label">dependencies</div>
-    </div>
+<!-- Counter -->
+<section class="snap-section" id="s-counter">
+  <div class="section-head">
+    <span class="label">Effect 02 — Counter</span>
+    <button class="replay-btn" data-replay="counter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
   </div>
+  <h2>Counter</h2>
+  <p class="desc">Animate any numeric value from zero when it enters the viewport.</p>
+  <div class="counter-grid" id="counter-demo">
+    <div class="counter-cell"><div class="counter-value"><span data-count="94">0</span><span class="counter-suffix">%</span></div><div class="counter-label">client satisfaction</div></div>
+    <div class="counter-cell"><div class="counter-value"><span data-count="40">0</span><span class="counter-suffix">+</span></div><div class="counter-label">projects shipped</div></div>
+    <div class="counter-cell"><div class="counter-value"><span data-count="3">0</span><span class="counter-suffix">K</span></div><div class="counter-label">lines extracted</div></div>
+    <div class="counter-cell"><div class="counter-value"><span data-count="0">0</span></div><div class="counter-label">dependencies</div></div>
+  </div>
+  <div class="code-block"><span class="kw">import</span> { <span class="fn">counter</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
-  <div class="code-block js-reveal" style="--delay:80">
-<span class="kw">import</span> { <span class="fn">counter</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
-
-<span class="cm">// Targets [data-count] by default</span>
 <span class="fn">counter</span>(<span class="str">'[data-count]'</span>, {
   duration:  1400,
   ease:      <span class="str">'cubicOut'</span>,
   formatter: (n) => n.<span class="fn">toLocaleString</span>(<span class="str">'en-US'</span>),
-})
-
-<span class="cm">// Custom attribute</span>
-<span class="fn">counter</span>(<span class="str">'.metric'</span>, { attribute: <span class="str">'data-value'</span> })
-  </div>
+})</div>
 </section>
 
-<div class="divider"></div>
-
-<!-- ── Progress ──────────────────────────────────────────────────────────────── -->
-<section id="progress">
-  <p class="label js-reveal">Effect 03</p>
-  <h2 class="js-reveal" style="--delay:60">Progress</h2>
-  <p class="desc js-reveal" style="--delay:120">Fill elements as each step scrolls through the viewport. Watch the circles fill as you scroll.</p>
-
+<!-- Progress -->
+<section class="snap-section" id="s-progress">
+  <div class="section-head">
+    <span class="label">Effect 03 — Progress</span>
+    <button class="replay-btn" data-replay="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
+  </div>
+  <h2>Progress</h2>
+  <p class="desc">Numbers fill left-to-right as each step scrolls through the viewport.</p>
   <div class="timeline" id="demo-timeline">
-    <div class="step">
-      <span class="step-num-wrap"><span class="step-num-ghost">01</span><span class="sc-fill">01</span></span>
-      <div class="step-title">Extract</div>
-      <div class="step-text">Pull existing scroll logic out of your production code into a reusable module.</div>
-    </div>
-    <div class="step">
-      <span class="step-num-wrap"><span class="step-num-ghost">02</span><span class="sc-fill">02</span></span>
-      <div class="step-title">Package</div>
-      <div class="step-text">Add TypeScript types, JSDoc, and a tsup build config for ESM + CJS output.</div>
-    </div>
-    <div class="step">
-      <span class="step-num-wrap"><span class="step-num-ghost">03</span><span class="sc-fill">03</span></span>
-      <div class="step-title">Publish</div>
-      <div class="step-text">Push to npm. Drop into any project with one import — no stylesheet required.</div>
-    </div>
-    <div class="step">
-      <span class="step-num-wrap"><span class="step-num-ghost">04</span><span class="sc-fill">04</span></span>
-      <div class="step-title">Embed</div>
-      <div class="step-text">Use as ESM import, CJS require, or a plain &lt;script&gt; tag on any page.</div>
-    </div>
+    <div class="step"><span class="step-num-wrap"><span class="step-num-ghost">01</span><span class="sc-fill">01</span></span><div class="step-title">Extract</div><div class="step-text">Pull existing scroll logic out of your production code into a reusable module.</div></div>
+    <div class="step"><span class="step-num-wrap"><span class="step-num-ghost">02</span><span class="sc-fill">02</span></span><div class="step-title">Package</div><div class="step-text">Add TypeScript types, JSDoc, and a tsup build config for ESM + CJS output.</div></div>
+    <div class="step"><span class="step-num-wrap"><span class="step-num-ghost">03</span><span class="sc-fill">03</span></span><div class="step-title">Publish</div><div class="step-text">Push to npm. Drop into any project with one import — no stylesheet required.</div></div>
+    <div class="step"><span class="step-num-wrap"><span class="step-num-ghost">04</span><span class="sc-fill">04</span></span><div class="step-title">Embed</div><div class="step-text">Use as ESM import, CJS require, or a plain &lt;script&gt; tag on any page.</div></div>
   </div>
+  <div class="code-block"><span class="kw">import</span> { <span class="fn">progress</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
-  <div class="code-block js-reveal" style="--delay:80">
-<span class="kw">import</span> { <span class="fn">progress</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
-
-<span class="cm">// Each .step needs a child .sc-fill that gets clip-path animated</span>
 <span class="fn">progress</span>(<span class="str">'#timeline .step'</span>, {
-  start: 0.82, <span class="cm">// fill starts when step top is 82% down viewport</span>
-  end:   0.2,  <span class="cm">// fill ends when step top is 20% down viewport</span>
+  start: 0.82,
+  end:   0.2,
   fillSelector: <span class="str">'.sc-fill'</span>,
-})
-  </div>
+})</div>
 </section>
 
-<div class="divider"></div>
-
-<!-- ── Text Reveal ──────────────────────────────────────────────────────────── -->
-<section id="text-reveal">
-  <p class="label js-reveal">Effect 04</p>
-  <h2 class="js-reveal" style="--delay:60">Text Reveal</h2>
-  <p class="desc js-reveal" style="--delay:120">Split text into accessible word or letter spans and reveal each piece with a staggered scroll trigger.</p>
-
-  <div class="text-reveal-showcase js-reveal" style="--delay:80">
+<!-- Text Reveal -->
+<section class="snap-section" id="s-text-reveal">
+  <div class="section-head">
+    <span class="label">Effect 04 — Text Reveal</span>
+    <button class="replay-btn" data-replay="text-reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
+  </div>
+  <h2>Text Reveal</h2>
+  <p class="desc">Split text into accessible word or letter spans and stagger each piece into view.</p>
+  <div class="text-reveal-showcase" id="text-reveal-demo">
     <p class="text-reveal-line js-text-reveal">Words arrive with intent, <em>one beat at a time.</em></p>
-    <p class="text-reveal-note js-text-reveal-letters">Letters can cascade too, while nested emphasis stays in the DOM instead of being flattened.</p>
+    <p class="text-reveal-note js-text-reveal-letters">Letters cascade too — while nested emphasis stays in the DOM instead of being flattened.</p>
   </div>
+  <div class="code-block"><span class="kw">import</span> { <span class="fn">textReveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
-  <div class="code-block js-reveal" style="--delay:80">
-<span class="kw">import</span> { <span class="fn">textReveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
-
-<span class="fn">textReveal</span>(<span class="str">'.headline'</span>, {
-  type:     <span class="str">'words'</span>,
-  stagger:  40,
-  duration: 600,
-  ease:     <span class="str">'cubicOut'</span>,
-})
-
-<span class="fn">textReveal</span>(<span class="str">'.eyebrow'</span>, { type: <span class="str">'letters'</span>, stagger: 18 })
-  </div>
+<span class="fn">textReveal</span>(<span class="str">'.headline'</span>, { type: <span class="str">'words'</span>, stagger: 40 })
+<span class="fn">textReveal</span>(<span class="str">'.eyebrow'</span>,  { type: <span class="str">'letters'</span>, stagger: 18 })</div>
 </section>
 
-<div class="divider"></div>
-
-<!-- ── Stagger ──────────────────────────────────────────────────────────────── -->
-<section id="stagger">
-  <p class="label js-reveal">Effect 05</p>
-  <h2 class="js-reveal" style="--delay:60">Stagger</h2>
-  <p class="desc js-reveal" style="--delay:120">Watch a parent and reveal its children one after another using only transform and opacity.</p>
-
-  <div class="stagger-board js-stagger">
-    <article class="stagger-tile">
-      <p class="stagger-kicker">01</p>
-      <h3 class="stagger-title">Resolve once</h3>
-      <p class="stagger-copy">Children are selected before observing, so the animation does not measure layout during frames.</p>
-    </article>
-    <article class="stagger-tile">
-      <p class="stagger-kicker">02</p>
-      <h3 class="stagger-title">Sequence cleanly</h3>
-      <p class="stagger-copy">Each child starts after the configured delay, creating a simple cascading reveal.</p>
-    </article>
-    <article class="stagger-tile">
-      <p class="stagger-kicker">03</p>
-      <h3 class="stagger-title">Clean up</h3>
-      <p class="stagger-copy">The standalone effect returns a cleanup function, and the class API tracks it through destroy().</p>
-    </article>
+<!-- Stagger -->
+<section class="snap-section" id="s-stagger">
+  <div class="section-head">
+    <span class="label">Effect 05 — Stagger</span>
+    <button class="replay-btn" data-replay="stagger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
   </div>
-
-  <div class="code-block js-reveal" style="--delay:80">
-<span class="kw">import</span> { <span class="fn">stagger</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+  <h2>Stagger</h2>
+  <p class="desc">Observe a parent, reveal its children one after another with a configurable delay.</p>
+  <div class="stagger-board" id="stagger-demo">
+    <article class="stagger-tile"><p class="stagger-kicker">01</p><h3 class="stagger-title">Resolve once</h3><p class="stagger-copy">Children are selected before observing, so layout is never measured during frames.</p></article>
+    <article class="stagger-tile"><p class="stagger-kicker">02</p><h3 class="stagger-title">Sequence cleanly</h3><p class="stagger-copy">Each child starts after the configured delay, creating a cascading reveal.</p></article>
+    <article class="stagger-tile"><p class="stagger-kicker">03</p><h3 class="stagger-title">Clean up</h3><p class="stagger-copy">Returns a cleanup function, tracked through destroy() on the class API.</p></article>
+  </div>
+  <div class="code-block"><span class="kw">import</span> { <span class="fn">stagger</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="fn">stagger</span>(<span class="str">'.feature-grid'</span>, {
   children:  <span class="str">'.card'</span>,
   direction: <span class="str">'up'</span>,
-  distance:  <span class="str">'24px'</span>,
   stagger:   80,
   duration:  600,
-})
-  </div>
+})</div>
 </section>
 
-<div class="divider"></div>
-
-<!-- ── Blur Reveal ──────────────────────────────────────────────────────────── -->
-<section id="blur-reveal">
-  <p class="label js-reveal">Effect 06</p>
-  <h2 class="js-reveal" style="--delay:60">Blur Reveal</h2>
-  <p class="desc js-reveal" style="--delay:120">Fade, de-blur, and lift elements into place when they enter the viewport.</p>
-
-  <div class="blur-panel js-blur-reveal">
+<!-- Blur Reveal -->
+<section class="snap-section" id="s-blur-reveal">
+  <div class="section-head">
+    <span class="label">Effect 06 — Blur Reveal</span>
+    <button class="replay-btn" data-replay="blur-reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
+  </div>
+  <h2>Blur Reveal</h2>
+  <p class="desc">Fade, de-blur, and lift elements into place as they enter the viewport.</p>
+  <div class="blur-panel" id="blur-reveal-demo">
     <div class="blur-orb"></div>
     <h3 class="blur-title">Soft focus on arrival.</h3>
     <p class="blur-copy">Use blurReveal for hero panels, editorial blocks, or product shots that should resolve from atmosphere into clarity.</p>
   </div>
-
-  <div class="code-block js-reveal" style="--delay:80">
-<span class="kw">import</span> { <span class="fn">blurReveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+  <div class="code-block"><span class="kw">import</span> { <span class="fn">blurReveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="fn">blurReveal</span>(<span class="str">'.panel'</span>, {
   blur:     <span class="str">'12px'</span>,
   distance: <span class="str">'16px'</span>,
   duration: 700,
-  ease:     <span class="str">'cubicOut'</span>,
-})
-  </div>
+})</div>
 </section>
 
-<div class="divider"></div>
-
-<!-- ── Zoom ─────────────────────────────────────────────────────────────────── -->
-<section id="zoom">
-  <p class="label js-reveal">Effect 07</p>
-  <h2 class="js-reveal" style="--delay:60">Zoom</h2>
-  <p class="desc js-reveal" style="--delay:120">Scale elements from a smaller starting point while fading them into view.</p>
-
-  <div class="zoom-stage">
-    <article class="zoom-card js-zoom">
-      <div class="zoom-number">01</div>
-      <h3 class="zoom-title">Composited scale</h3>
-      <p class="zoom-copy">Opacity and transform stay on the compositor path for smooth card and media reveals.</p>
-    </article>
-    <article class="zoom-card zoom-card--alt js-zoom">
-      <div class="zoom-number">02</div>
-      <h3 class="zoom-title">Centered origin</h3>
-      <p class="zoom-copy">The effect sets transform-origin to center while it runs, then restores your inline styles on cleanup.</p>
-    </article>
+<!-- Zoom -->
+<section class="snap-section" id="s-zoom">
+  <div class="section-head">
+    <span class="label">Effect 07 — Zoom</span>
+    <button class="replay-btn" data-replay="zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
   </div>
-
-  <div class="code-block js-reveal" style="--delay:80">
-<span class="kw">import</span> { <span class="fn">zoom</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+  <h2>Zoom</h2>
+  <p class="desc">Scale elements from a smaller starting point while fading them into view.</p>
+  <div class="zoom-stage" id="zoom-demo">
+    <article class="zoom-card"><div class="zoom-number">01</div><h3 class="zoom-title">Composited scale</h3><p class="zoom-copy">Opacity and transform stay on the compositor path for smooth card and media reveals.</p></article>
+    <article class="zoom-card zoom-card--alt"><div class="zoom-number">02</div><h3 class="zoom-title">Centered origin</h3><p class="zoom-copy">Sets transform-origin to center while running, then restores styles on cleanup.</p></article>
+  </div>
+  <div class="code-block"><span class="kw">import</span> { <span class="fn">zoom</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="fn">zoom</span>(<span class="str">'.product-card'</span>, {
   from:     0.94,
-  to:       1,
   duration: 600,
   ease:     <span class="str">'cubicOut'</span>,
-})
-  </div>
+})</div>
 </section>
 
-<div class="divider"></div>
-
-<!-- ── Parallax ─────────────────────────────────────────────────────────────── -->
-<section id="parallax">
-  <p class="label js-reveal">Effect 08</p>
-  <h2 class="js-reveal" style="--delay:60">Parallax</h2>
-  <p class="desc js-reveal" style="--delay:120">Move decorative layers based on scroll position with batched transform updates.</p>
-
-  <div class="parallax-scene">
-    <div class="parallax-layer parallax-layer--one js-parallax"></div>
-    <div class="parallax-layer parallax-layer--two js-parallax-x"></div>
-    <div class="parallax-content">
-      <h3 class="parallax-title">Depth without layout churn.</h3>
-      <p class="parallax-copy">Parallax caches geometry, updates visible elements in requestAnimationFrame, and disables movement for reduced-motion users.</p>
-    </div>
-  </div>
-
-  <div class="code-block js-reveal" style="--delay:80">
-<span class="kw">import</span> { <span class="fn">parallax</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
-
-<span class="fn">parallax</span>(<span class="str">'.hero-orb'</span>, {
-  speed:  0.25,
-  axis:   <span class="str">'y'</span>,
-  clamp:  120,
-})
-
-<span class="fn">parallax</span>(<span class="str">'.side-orb'</span>, { axis: <span class="str">'x'</span>, reverse: true })
-  </div>
-</section>
-
-<div class="divider"></div>
-
-<!-- ── Class API ─────────────────────────────────────────────────────────────── -->
-<section id="api">
-  <p class="label js-reveal">API</p>
-  <h2 class="js-reveal" style="--delay:60">Chainable class</h2>
-  <p class="desc js-reveal" style="--delay:120">All eight effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
-
-  <div class="code-block js-reveal" style="--delay:80">
-<span class="kw">import</span> { <span class="fn">ScrollCraft</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
-
-<span class="kw">const</span> sc = <span class="kw">new</span> <span class="fn">ScrollCraft</span>()
-
-sc.<span class="fn">reveal</span>(<span class="str">'.hero-text'</span>, { delay: 100, direction: <span class="str">'up'</span> })
-  .<span class="fn">blurReveal</span>(<span class="str">'.panel'</span>, { blur: <span class="str">'12px'</span> })
-  .<span class="fn">counter</span>(<span class="str">'[data-count]'</span>, { duration: 1200 })
-  .<span class="fn">parallax</span>(<span class="str">'.hero-orb'</span>, { speed: 0.2 })
-  .<span class="fn">progress</span>(<span class="str">'#timeline .step'</span>)
-  .<span class="fn">stagger</span>(<span class="str">'.feature-grid'</span>, { children: <span class="str">'.card'</span> })
-  .<span class="fn">textReveal</span>(<span class="str">'.headline'</span>, { type: <span class="str">'words'</span> })
-  .<span class="fn">zoom</span>(<span class="str">'.product-card'</span>, { from: 0.94 })
-
-<span class="cm">// Later — disconnect all observers + listeners</span>
-sc.<span class="fn">destroy</span>()
-  </div>
-</section>
-
-<!-- ── Footer ────────────────────────────────────────────────────────────────── -->
 <footer>
-  <p>Built by <a href="https://bilalstudio.io">Bilal Studio</a> · <a href="https://github.com/bilalstudio/scroll-craft">GitHub</a> · <a href="https://npmjs.com/package/scroll-craft">npm</a></p>
+  <p>Built by <a href="https://bilalstudio.io">Bilal Studio</a> · <a href="https://github.com/Bilal-Studios/scroll-craft">GitHub</a> · <a href="https://npmjs.com/package/scroll-craft">npm</a></p>
 </footer>
 
 <script type="module">
-  // In production this would be: import { ScrollCraft } from 'scroll-craft'
-  // For the demo we inline a minimal version of the library logic
-
-  // ── Easing ──
-  const ease = {
+  // ── Easing
+  const easeFns = {
     cubicOut:   t => 1 - (1 - t) ** 3,
     elasticOut: t => t === 0 || t === 1 ? t : 2 ** (-10 * t) * Math.sin((t * 10 - 0.75) * (2 * Math.PI / 3)) + 1,
     backOut:    t => { const c = 2.70158; return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2 },
   }
 
-  // ── Reveal ──
-  function revealEls(els, { delay = 0, distance = '24px', direction = 'up', duration = 600, easeFn = ease.cubicOut } = {}) {
-    const tx = direction === 'left' ? distance : direction === 'right' ? `-${distance}` : '0'
-    const ty = direction === 'up'   ? distance : direction === 'down'  ? `-${distance}` : '0'
-    els.forEach(el => {
-      el.style.opacity = '0'
-      el.style.transform = `translate(${tx}, ${ty})`
-      el.style.willChange = 'opacity, transform'
-    })
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return
-        const el = entry.target
-        const elDelay = delay + (Number(el.style.getPropertyValue('--delay')) || 0)
-        const start = performance.now() + elDelay
-        const dist = parseFloat(distance)
-        const unit = distance.replace(/[\d.-]/g, '') || 'px'
-        function step(now) {
-          if (now < start) { requestAnimationFrame(step); return }
-          const p = Math.min(1, (now - start) / duration)
-          const e = easeFn(p)
-          el.style.opacity = e
-          if (direction === 'left' || direction === 'right') {
-            el.style.transform = `translateX(${dist * (direction === 'left' ? (1 - e) : -(1 - e))}${unit})`
-          } else {
-            el.style.transform = `translateY(${dist * (direction === 'up' ? (1 - e) : -(1 - e))}${unit})`
-          }
-          if (p < 1) requestAnimationFrame(step)
-          else { el.style.opacity = '1'; el.style.transform = 'none'; el.style.willChange = 'auto' }
-        }
-        requestAnimationFrame(step)
-        obs.unobserve(el)
-      })
-    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' })
-    els.forEach(el => obs.observe(el))
+  // ── Direct animators (no observer — called by init and replay)
+
+  function animateEl(el, { delay = 0, direction = 'up', distance = '24px', duration = 600, easeFn = easeFns.cubicOut } = {}) {
+    const dist = parseFloat(distance), unit = distance.replace(/[\d.-]/g, '') || 'px'
+    el.style.opacity = '0'
+    el.style.willChange = 'opacity, transform'
+    const start = performance.now() + delay
+    ;(function step(now) {
+      if (now < start) { requestAnimationFrame(step); return }
+      const p = Math.min(1, (now - start) / duration), e = easeFn(p)
+      el.style.opacity = e
+      el.style.transform = direction === 'left'  ? `translateX(${dist*(1-e)}${unit})`
+                         : direction === 'right' ? `translateX(${-dist*(1-e)}${unit})`
+                         : direction === 'down'  ? `translateY(${-dist*(1-e)}${unit})`
+                         :                         `translateY(${dist*(1-e)}${unit})`
+      if (p < 1) requestAnimationFrame(step)
+      else { el.style.opacity='1'; el.style.transform='none'; el.style.willChange='auto' }
+    })(performance.now())
   }
 
-  // ── Counter ──
-  function animateCounters() {
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return
-        const el = entry.target
-        const target = Number(el.dataset.count || 0)
-        const start = performance.now()
-        const duration = 1400
-        function step(now) {
-          const p = Math.min(1, (now - start) / duration)
-          el.textContent = Math.round(target * ease.cubicOut(p)).toLocaleString('en-US')
-          if (p < 1) requestAnimationFrame(step)
-        }
-        requestAnimationFrame(step)
-        obs.unobserve(el)
-      })
-    }, { threshold: 0.45 })
-    document.querySelectorAll('[data-count]').forEach(el => obs.observe(el))
+  function animateCount(el, duration = 1400) {
+    const target = Number(el.dataset.count || 0)
+    el.textContent = '0'
+    const start = performance.now()
+    ;(function step(now) {
+      const p = Math.min(1, (now - start) / duration)
+      el.textContent = Math.round(target * easeFns.cubicOut(p)).toLocaleString('en-US')
+      if (p < 1) requestAnimationFrame(step)
+    })(performance.now())
   }
 
-  // ── Progress ──
-  function animateProgress() {
-    const steps = document.querySelectorAll('#demo-timeline .step')
-    const fills = [...steps].map(s => s.querySelector('.sc-fill'))
-    function update() {
-      const winH = window.innerHeight
-      steps.forEach((step, i) => {
-        if (!fills[i]) return
-        const rect = step.getBoundingClientRect()
-        const prog = Math.min(1, Math.max(0, (winH * 0.82 - rect.top) / (winH * 0.62)))
-        fills[i].style.clipPath = `inset(0 ${Math.round((1 - prog) * 100)}% 0 0)`
-      })
-    }
-    window.addEventListener('scroll', update, { passive: true })
-    update()
+  function animateBlur(el, { blur = '12px', distance = '16px', duration = 700 } = {}) {
+    const bv = parseFloat(blur), bu = blur.replace(/[\d.-]/g,'')||'px'
+    const dv = parseFloat(distance), du = distance.replace(/[\d.-]/g,'')||'px'
+    el.style.cssText += `;opacity:0;filter:blur(${blur});transform:translateY(${distance});will-change:opacity,filter,transform`
+    const start = performance.now()
+    ;(function step(now) {
+      const p = Math.min(1, (now - start) / duration), e = easeFns.cubicOut(p)
+      el.style.opacity = e
+      el.style.filter = `blur(${bv*(1-e)}${bu})`
+      el.style.transform = `translateY(${dv*(1-e)}${du})`
+      if (p < 1) requestAnimationFrame(step)
+      else { el.style.opacity='1'; el.style.filter='none'; el.style.transform='none'; el.style.willChange='auto' }
+    })(performance.now())
   }
 
-  // ── Text Reveal ──
-  function splitTextReveal(el, type, hidden) {
-    if (hidden) el.setAttribute('aria-label', el.textContent || '')
+  function animateZoomEl(el, { from = 0.94, duration = 600, delay = 0 } = {}) {
+    el.style.opacity = '0'; el.style.transform = `scale(${from})`; el.style.transformOrigin = 'center'; el.style.willChange = 'opacity,transform'
+    const start = performance.now() + delay
+    ;(function step(now) {
+      if (now < start) { requestAnimationFrame(step); return }
+      const p = Math.min(1, (now - start) / duration), e = easeFns.cubicOut(p)
+      el.style.opacity = e; el.style.transform = `scale(${from + (1-from)*e})`
+      if (p < 1) requestAnimationFrame(step)
+      else { el.style.opacity='1'; el.style.transform='scale(1)'; el.style.willChange='auto' }
+    })(performance.now())
+  }
+
+  // ── Text reveal split + animate
+  const trStates = new Map()
+
+  function splitText(el, type) {
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
-      acceptNode: node => /\S/.test(node.textContent || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
+      acceptNode: n => /\S/.test(n.textContent||'') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
     })
-    const textNodes = []
-    let current = walker.nextNode()
-    while (current) {
-      textNodes.push(current)
-      current = walker.nextNode()
-    }
+    const nodes = []; let cur = walker.nextNode()
+    while (cur) { nodes.push(cur); cur = walker.nextNode() }
     const spans = []
-    textNodes.forEach(textNode => {
-      const parts = type === 'letters' ? [...textNode.data] : textNode.data.match(/\S+|\s+/g) || []
-      const fragment = document.createDocumentFragment()
+    nodes.forEach(tn => {
+      const parts = type === 'letters' ? [...tn.data] : tn.data.match(/\S+|\s+/g)||[]
+      const frag = document.createDocumentFragment()
       parts.forEach(part => {
-        const node = /\s/.test(part) ? document.createTextNode(part) : document.createElement('span')
-        if (node.nodeType === 1) {
-          node.textContent = part
-          node.style.display = 'inline-block'
-          node.style.opacity = '0'
-          node.style.transform = 'translateY(0.75em)'
-          node.style.willChange = 'opacity, transform'
-          if (hidden) node.setAttribute('aria-hidden', 'true')
-          spans.push(node)
-        }
-        fragment.appendChild(node)
+        if (/\s/.test(part)) { frag.appendChild(document.createTextNode(part)); return }
+        const s = document.createElement('span')
+        s.textContent = part; s.style.cssText = 'display:inline-block;opacity:0;transform:translateY(0.75em);will-change:opacity,transform'
+        frag.appendChild(s); spans.push(s)
       })
-      textNode.parentNode.replaceChild(fragment, textNode)
+      tn.parentNode.replaceChild(frag, tn)
     })
     return spans
   }
 
-  function animateTextReveal(selector, { type = 'words', stagger = 40, duration = 600 } = {}) {
-    const states = [...document.querySelectorAll(selector)].map(el => ({
-      el,
-      spans: splitTextReveal(el, type, el.children.length === 0),
-    }))
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return
-        const state = states.find(s => s.el === entry.target)
-        if (!state) return
-        state.spans.forEach((span, index) => {
-          const start = performance.now() + index * stagger
-          function step(now) {
-            if (now < start) { requestAnimationFrame(step); return }
-            const p = Math.min(1, (now - start) / duration)
-            const e = ease.cubicOut(p)
-            span.style.opacity = e
-            span.style.transform = `translateY(${(1 - e) * 0.75}em)`
-            if (p < 1) requestAnimationFrame(step)
-            else { span.style.opacity = '1'; span.style.transform = 'none'; span.style.willChange = 'auto' }
-          }
-          requestAnimationFrame(step)
-        })
-        entry.target.classList.add('sc-in')
-        obs.unobserve(entry.target)
-      })
-    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' })
-    states.forEach(state => obs.observe(state.el))
-  }
-
-  // ── Stagger ──
-  function animateStagger(selector, { children = ':scope > *', direction = 'up', distance = '24px', stagger = 80, duration = 600 } = {}) {
-    const initial = direction === 'left' ? `translateX(${distance})`
-      : direction === 'right' ? `translateX(-${distance})`
-      : direction === 'down' ? `translateY(-${distance})`
-      : `translateY(${distance})`
-    const dist = parseFloat(distance)
-    const unit = distance.replace(/[\d.-]/g, '') || 'px'
-    const states = [...document.querySelectorAll(selector)].map(parent => {
-      const childEls = [...parent.querySelectorAll(children)]
-      childEls.forEach(child => {
-        child.style.opacity = '0'
-        child.style.transform = initial
-        child.style.willChange = 'opacity, transform'
-      })
-      return { parent, children: childEls }
+  function runTextReveal(spans, { stagger = 40, duration = 600 } = {}) {
+    spans.forEach((span, i) => {
+      span.style.opacity = '0'; span.style.transform = 'translateY(0.75em)'
+      const start = performance.now() + i * stagger
+      ;(function step(now) {
+        if (now < start) { requestAnimationFrame(step); return }
+        const p = Math.min(1,(now-start)/duration), e = easeFns.cubicOut(p)
+        span.style.opacity = e; span.style.transform = `translateY(${(1-e)*.75}em)`
+        if (p < 1) requestAnimationFrame(step)
+        else { span.style.opacity='1'; span.style.transform='none'; span.style.willChange='auto' }
+      })(performance.now())
     })
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return
-        const state = states.find(s => s.parent === entry.target)
-        if (!state) return
-        state.children.forEach((child, index) => {
-          const start = performance.now() + index * stagger
-          function step(now) {
-            if (now < start) { requestAnimationFrame(step); return }
-            const p = Math.min(1, (now - start) / duration)
-            const e = ease.cubicOut(p)
-            const offset = dist * (1 - e)
-            child.style.opacity = e
-            child.style.transform = direction === 'left' ? `translateX(${offset}${unit})`
-              : direction === 'right' ? `translateX(${-offset}${unit})`
-              : direction === 'down' ? `translateY(${-offset}${unit})`
-              : `translateY(${offset}${unit})`
-            if (p < 1) requestAnimationFrame(step)
-            else { child.style.opacity = '1'; child.style.transform = 'none'; child.style.willChange = 'auto' }
-          }
-          requestAnimationFrame(step)
-        })
-        entry.target.classList.add('sc-in')
-        obs.unobserve(entry.target)
-      })
-    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' })
-    states.forEach(state => obs.observe(state.parent))
   }
 
-  // ── Blur Reveal ──
-  function animateBlurReveal(selector, { blur = '12px', distance = '16px', duration = 700 } = {}) {
-    const blurValue = parseFloat(blur)
-    const blurUnit = blur.replace(/[\d.-]/g, '') || 'px'
-    const dist = parseFloat(distance)
-    const unit = distance.replace(/[\d.-]/g, '') || 'px'
-    const els = [...document.querySelectorAll(selector)]
-    els.forEach(el => {
-      el.style.opacity = '0'
-      el.style.filter = `blur(${blur})`
-      el.style.transform = `translateY(${distance})`
-      el.style.willChange = 'opacity, filter, transform'
+  // ── Progress scroll handler
+  function updateProgress() {
+    const winH = window.innerHeight
+    document.querySelectorAll('#demo-timeline .step').forEach(step => {
+      const fill = step.querySelector('.sc-fill'); if (!fill) return
+      const rect = step.getBoundingClientRect()
+      const prog = Math.min(1, Math.max(0, (winH * 0.82 - rect.top) / (winH * 0.62)))
+      fill.style.clipPath = `inset(0 ${Math.round((1-prog)*100)}% 0 0)`
     })
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true })
+
+  // ── Init with IntersectionObserver for scroll trigger
+
+  function observe(selector, fn, opts = {}) {
     const obs = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return
-        const el = entry.target
-        const start = performance.now()
-        function step(now) {
-          const p = Math.min(1, (now - start) / duration)
-          const e = ease.cubicOut(p)
-          el.style.opacity = e
-          el.style.filter = `blur(${blurValue * (1 - e)}${blurUnit})`
-          el.style.transform = `translateY(${dist * (1 - e)}${unit})`
-          if (p < 1) requestAnimationFrame(step)
-          else { el.style.opacity = '1'; el.style.filter = 'blur(0)'; el.style.transform = 'translateY(0)'; el.style.willChange = 'auto' }
-        }
-        requestAnimationFrame(step)
-        el.classList.add('sc-in')
-        obs.unobserve(el)
-      })
-    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' })
-    els.forEach(el => obs.observe(el))
+      entries.forEach(e => { if (!e.isIntersecting) return; fn(e.target); obs.unobserve(e.target) })
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px', ...opts })
+    document.querySelectorAll(selector).forEach(el => obs.observe(el))
   }
 
-  // ── Zoom ──
-  function animateZoom(selector, { from = 0.94, to = 1, duration = 600 } = {}) {
-    const els = [...document.querySelectorAll(selector)]
-    els.forEach(el => {
-      el.style.opacity = '0'
-      el.style.transform = `scale(${from})`
-      el.style.transformOrigin = 'center'
-      el.style.willChange = 'opacity, transform'
-    })
+  // Hero
+  observe('.js-reveal', el => animateEl(el, { delay: Number(el.style.getPropertyValue('--delay'))||0 }))
+
+  // Reveal cards — animate immediately on load since they're above fold or close
+  document.querySelectorAll('#reveal-demo .reveal-card').forEach(el => {
+    const dir = el.dataset.revealDir || 'up'
+    const delay = Number(el.dataset.delay) || 0
+    const efn = (dir==='left'||dir==='right') ? easeFns.elasticOut : dir==='down' ? easeFns.backOut : easeFns.cubicOut
+    el.style.opacity = '0'
+    observe(`#reveal-demo [data-reveal-dir="${dir}"]`, target => animateEl(target, { delay, direction: dir, distance: '32px', easeFn: efn }))
+  })
+
+  // Counter
+  observe('[data-count]', el => animateCount(el), { threshold: 0.45 })
+
+  // Text reveal — split on load, animate on scroll
+  document.querySelectorAll('.js-text-reveal').forEach(el => {
+    const spans = splitText(el, 'words')
+    trStates.set(el, { spans, opts: { stagger: 40 } })
+  })
+  document.querySelectorAll('.js-text-reveal-letters').forEach(el => {
+    const spans = splitText(el, 'letters')
+    trStates.set(el, { spans, opts: { stagger: 18 } })
+  })
+  trStates.forEach(({ spans, opts }, el) => {
+    observe(`#${el.closest('[id]')?.id} .js-text-reveal, #${el.closest('[id]')?.id} .js-text-reveal-letters`, () => runTextReveal(spans, opts))
+    // simpler: observe the element itself
     const obs = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return
-        const el = entry.target
-        const start = performance.now()
-        function step(now) {
-          const p = Math.min(1, (now - start) / duration)
-          const e = ease.cubicOut(p)
-          el.style.opacity = e
-          el.style.transform = `scale(${from + ((to - from) * e)})`
-          if (p < 1) requestAnimationFrame(step)
-          else { el.style.opacity = '1'; el.style.transform = `scale(${to})`; el.style.transformOrigin = 'center'; el.style.willChange = 'auto' }
-        }
-        requestAnimationFrame(step)
-        el.classList.add('sc-in')
-        obs.unobserve(el)
+      entries.forEach(e => { if (!e.isIntersecting) return; runTextReveal(spans, opts); obs.unobserve(e.target) })
+    }, { threshold: 0.12 })
+    obs.observe(el)
+  })
+
+  // Stagger tiles
+  document.querySelectorAll('#stagger-demo .stagger-tile').forEach(el => { el.style.opacity='0'; el.style.transform='translateY(24px)' })
+  observe('#stagger-demo', el => el.querySelectorAll('.stagger-tile').forEach((t,i) => animateEl(t, { delay: i*80 })))
+
+  // Blur reveal
+  observe('#blur-reveal-demo', el => animateBlur(el))
+
+  // Zoom
+  document.querySelectorAll('#zoom-demo .zoom-card').forEach((el,i) => {
+    el.style.opacity='0'; el.style.transform='scale(0.94)'
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (!e.isIntersecting) return; animateZoomEl(e.target, { delay: i*120 }); obs.unobserve(e.target) })
+    }, { threshold: 0.2 })
+    obs.observe(el)
+  })
+
+  updateProgress()
+
+  // ── Replay handlers
+
+  const replays = {
+    reveal() {
+      document.querySelectorAll('#reveal-demo .reveal-card').forEach(el => {
+        const dir = el.dataset.revealDir||'up', delay = Number(el.dataset.delay)||0
+        const efn = (dir==='left'||dir==='right') ? easeFns.elasticOut : dir==='down' ? easeFns.backOut : easeFns.cubicOut
+        animateEl(el, { delay, direction: dir, distance: '32px', easeFn: efn })
       })
-    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' })
-    els.forEach(el => obs.observe(el))
+    },
+    counter() {
+      document.querySelectorAll('#counter-demo [data-count]').forEach(el => animateCount(el))
+    },
+    progress() {
+      document.querySelectorAll('#demo-timeline .sc-fill').forEach(f => { f.style.clipPath = 'inset(0 100% 0 0)' })
+      setTimeout(updateProgress, 50)
+    },
+    'text-reveal'() {
+      trStates.forEach(({ spans, opts }) => runTextReveal(spans, opts))
+    },
+    stagger() {
+      document.querySelectorAll('#stagger-demo .stagger-tile').forEach((el,i) => animateEl(el, { delay: i*80 }))
+    },
+    'blur-reveal'() {
+      animateBlur(document.querySelector('#blur-reveal-demo'))
+    },
+    zoom() {
+      document.querySelectorAll('#zoom-demo .zoom-card').forEach((el,i) => animateZoomEl(el, { delay: i*120 }))
+    },
   }
 
-  // ── Parallax ──
-  function animateParallax(selector, { speed = 0.25, axis = 'y', reverse = false, clamp = 120, rootMargin = '0px' } = {}) {
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
-    const states = [...document.querySelectorAll(selector)].map(el => ({
-      el,
-      transform: el.style.transform,
-      top: 0,
-      left: 0,
-      width: 0,
-      height: 0,
-      visible: !('IntersectionObserver' in window),
-    }))
-    let raf = null
-    function measure() {
-      const sx = window.scrollX || window.pageXOffset
-      const sy = window.scrollY || window.pageYOffset
-      states.forEach(state => {
-        const rect = state.el.getBoundingClientRect()
-        state.top = rect.top + sy
-        state.left = rect.left + sx
-        state.width = rect.width
-        state.height = rect.height
-      })
-    }
-    function write() {
-      raf = null
-      if (reduceMotion && reduceMotion.matches) {
-        states.forEach(state => { state.el.style.transform = state.transform })
-        return
-      }
-      const sx = window.scrollX || window.pageXOffset
-      const sy = window.scrollY || window.pageYOffset
-      const cx = sx + window.innerWidth / 2
-      const cy = sy + window.innerHeight / 2
-      const dir = reverse ? -1 : 1
-      states.forEach(state => {
-        if (!state.visible) return
-        const center = axis === 'y' ? state.top + state.height / 2 : state.left + state.width / 2
-        const viewport = axis === 'y' ? cy : cx
-        const offset = Math.max(-clamp, Math.min(clamp, (viewport - center) * speed * dir))
-        state.el.style.transform = axis === 'y'
-          ? `translate3d(0, ${offset}px, 0)`
-          : `translate3d(${offset}px, 0, 0)`
-      })
-    }
-    function schedule() {
-      if (raf !== null) return
-      raf = requestAnimationFrame(write)
-    }
-    measure()
-    schedule()
-    const obs = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        const state = states.find(item => item.el === entry.target)
-        if (state) state.visible = entry.isIntersecting
-      })
-      schedule()
-    }, { rootMargin }) : null
-    states.forEach(state => obs && obs.observe(state.el))
-    window.addEventListener('scroll', schedule, { passive: true })
-    window.addEventListener('resize', () => { measure(); schedule() })
-  }
-
-  // ── Init ──
-  revealEls(document.querySelectorAll('.js-reveal'))
-  revealEls(document.querySelectorAll('.js-reveal--left'),  { direction: 'left',  distance: '40px', easeFn: ease.elasticOut })
-  revealEls(document.querySelectorAll('.js-reveal--right'), { direction: 'right', distance: '40px', easeFn: ease.elasticOut })
-  revealEls(document.querySelectorAll('.js-reveal--down'),  { direction: 'down',  distance: '32px', easeFn: ease.backOut })
-  animateCounters()
-  animateProgress()
-  animateTextReveal('.js-text-reveal')
-  animateTextReveal('.js-text-reveal-letters', { type: 'letters', stagger: 18 })
-  animateStagger('.js-stagger', { children: '.stagger-tile' })
-  animateBlurReveal('.js-blur-reveal')
-  animateZoom('.js-zoom')
-  animateParallax('.js-parallax')
-  animateParallax('.js-parallax-x', { axis: 'x', reverse: true, speed: 0.18, clamp: 90 })
+  document.querySelectorAll('.replay-btn').forEach(btn => {
+    btn.addEventListener('click', () => { const k = btn.dataset.replay; if (replays[k]) replays[k]() })
+  })
 </script>
-
 </body>
 </html>
