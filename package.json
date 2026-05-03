@@ -7,7 +7,7 @@
   "homepage": "https://github.com/Bilal-Studios/scroll-craft#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Bilal-Studios/scroll-craft.git"
+    "url": "git+https://github.com/Bilal-Studios/scroll-craft.git"
   },
   "keywords": [
     "scroll",
