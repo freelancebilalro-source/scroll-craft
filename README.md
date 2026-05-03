@@ -1,5 +1,6 @@
 # ScrollCraft
 
+![CI](https://github.com/Bilal-Studios/scroll-craft/actions/workflows/ci.yml/badge.svg)
 ![npm](https://img.shields.io/npm/v/scroll-craft?color=blue)
 ![size](https://img.shields.io/bundlephobia/minzip/scroll-craft)
 ![license](https://img.shields.io/npm/l/scroll-craft)

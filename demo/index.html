@@ -299,7 +299,7 @@
   <p class="desc js-reveal" style="--delay:120">All three effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
 
   <div class="code-block js-reveal" style="--delay:80">
-<span class="kw">import</span> ScrollCraft <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+<span class="kw">import</span> { <span class="fn">ScrollCraft</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="kw">const</span> sc = <span class="kw">new</span> <span class="fn">ScrollCraft</span>()
 
@@ -318,7 +318,7 @@ sc.<span class="fn">destroy</span>()
 </footer>
 
 <script type="module">
-  // In production this would be: import ScrollCraft from 'scroll-craft'
+  // In production this would be: import { ScrollCraft } from 'scroll-craft'
   // For the demo we inline a minimal version of the library logic
 
   // ── Easing ──
