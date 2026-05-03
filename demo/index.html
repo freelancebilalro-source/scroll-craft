@@ -59,7 +59,7 @@
     .hero-eyebrow { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase; margin-bottom: 24px; }
     .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(3rem, 10vw, 6.5rem); font-weight: 900; line-height: 0.95; margin-bottom: 32px; }
     .hero h1 em { font-style: normal; color: var(--cyan); }
-    .hero p { font-size: 1.125rem; color: var(--muted); max-width: 480px; line-height: 1.7; margin-bottom: 48px; }
+    .hero p { font-size: 1.125rem; color: var(--muted); max-width: 560px; line-height: 1.7; margin-bottom: 48px; }
     .badge-row { display: flex; gap: 12px; flex-wrap: wrap; }
     .badge { display: inline-block; padding: 6px 14px; border: 1px solid rgba(0,255,209,0.25); border-radius: 99px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--cyan); }
     .scroll-hint { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; font-family: 'Space Mono', monospace; letter-spacing: 0.1em; animation: bounce 2s ease-in-out infinite; }
@@ -119,6 +119,77 @@
     .zoom-copy { color: var(--muted); line-height: 1.65; font-size: 0.9rem; }
     @media (max-width: 600px) { .zoom-stage { grid-template-columns: 1fr; } }
 
+    /* parallax */
+    .parallax-scene {
+      position: relative;
+      min-height: 420px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(0,255,209,0.2), transparent 26%),
+        radial-gradient(circle at 82% 28%, rgba(255,0,200,0.18), transparent 28%),
+        linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      isolation: isolate;
+    }
+    .parallax-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at center, black, transparent 74%);
+      opacity: 0.55;
+    }
+    .parallax-layer {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 900;
+      will-change: transform;
+    }
+    .parallax-layer--one {
+      width: clamp(170px, 28vw, 280px);
+      height: clamp(170px, 28vw, 280px);
+      left: 8%;
+      top: 14%;
+      color: #02120f;
+      background: linear-gradient(135deg, var(--cyan), #8cffea);
+      box-shadow: 0 30px 80px rgba(0,255,209,0.22);
+      font-size: clamp(3.2rem, 9vw, 6.8rem);
+      z-index: 2;
+    }
+    .parallax-layer--two {
+      width: clamp(130px, 20vw, 210px);
+      height: clamp(130px, 20vw, 210px);
+      right: 10%;
+      bottom: 13%;
+      color: #190014;
+      background: linear-gradient(135deg, var(--magenta), var(--gold));
+      box-shadow: 0 30px 80px rgba(255,0,200,0.2);
+      font-size: clamp(2.7rem, 7vw, 5.2rem);
+      z-index: 3;
+    }
+    .parallax-caption {
+      position: absolute;
+      left: 34px;
+      bottom: 28px;
+      max-width: 290px;
+      color: #bcbcd0;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      z-index: 4;
+    }
+    @media (max-width: 600px) {
+      .parallax-scene { min-height: 360px; }
+      .parallax-layer--one { left: -4%; top: 12%; }
+      .parallax-layer--two { right: -6%; bottom: 20%; }
+      .parallax-caption { left: 22px; right: 22px; bottom: 22px; }
+    }
+
     /* code */
     .code-block { background: var(--bg-alt); border: 1px solid rgba(0,255,209,0.12); border-radius: 12px; padding: 22px 26px; font-family: 'Space Mono', monospace; font-size: 0.78rem; line-height: 1.8; color: #a0a0b8; overflow-x: auto; margin-top: 28px; }
     .code-block .kw { color: var(--magenta); }
@@ -138,7 +209,7 @@
   <div class="hero-inner">
     <p class="hero-eyebrow js-reveal">scroll-craft v0.1</p>
     <h1 class="js-reveal" style="--delay:80">Scroll<br/><em>animation</em><br/>that ships.</h1>
-    <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. Reveals, counters, progress fills, staggers, zooms, and text reveals — in TypeScript.</p>
+    <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. Reveals, counters, progress fills, staggers, zooms, parallax, and text reveals — in TypeScript.</p>
     <div class="badge-row js-reveal" style="--delay:240">
       <span class="badge">0 dependencies</span>
       <span class="badge">~4KB minified</span>
@@ -319,6 +390,29 @@
 })</div>
 </section>
 
+<!-- Parallax -->
+<section class="snap-section" id="s-parallax">
+  <div class="section-head">
+    <span class="label">Effect 08 — Parallax</span>
+    <button class="replay-btn" data-replay="parallax"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>REPLAY</button>
+  </div>
+  <h2>Parallax</h2>
+  <p class="desc">Move decorative layers from scroll position using requestAnimationFrame and compositor-friendly translate3d transforms.</p>
+  <div class="parallax-scene" id="parallax-demo">
+    <div class="parallax-grid"></div>
+    <div class="parallax-layer parallax-layer--one js-parallax-y">Y</div>
+    <div class="parallax-layer parallax-layer--two js-parallax-x">X</div>
+    <p class="parallax-caption">Scroll through this panel: the cyan layer moves vertically while the magenta layer drifts horizontally.</p>
+  </div>
+  <div class="code-block"><span class="kw">import</span> { <span class="fn">parallax</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">parallax</span>(<span class="str">'.decor-layer'</span>, {
+  speed:   0.25,
+  axis:    <span class="str">'y'</span>,
+  clamp:   120,
+})</div>
+</section>
+
 <footer>
   <p>Built by <a href="https://bilalstudio.io">Bilal Studio</a> · <a href="https://github.com/Bilal-Studios/scroll-craft">GitHub</a> · <a href="https://npmjs.com/package/scroll-craft">npm</a></p>
 </footer>
@@ -387,6 +481,86 @@
       if (p < 1) requestAnimationFrame(step)
       else { el.style.opacity='1'; el.style.transform='scale(1)'; el.style.willChange='auto' }
     })(performance.now())
+  }
+
+  const parallaxCleanups = []
+
+  function createParallax(selector, { speed = 0.25, axis = 'y', reverse = false, clamp = 120, rootMargin = '0px' } = {}) {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const elements = [...document.querySelectorAll(selector)]
+    const states = elements.map(el => ({
+      el,
+      originalTransform: el.style.transform,
+      originalWillChange: el.style.willChange,
+      rect: null,
+      visible: false,
+    }))
+    let frame = 0
+
+    if (reduceMotion.matches || !states.length) return () => {}
+
+    function read() {
+      states.forEach(state => {
+        state.rect = state.el.getBoundingClientRect()
+      })
+    }
+
+    function write() {
+      const mid = window.innerHeight / 2
+      states.forEach(state => {
+        if (!state.visible || !state.rect) return
+        const elementMid = state.rect.top + state.rect.height / 2
+        const raw = (mid - elementMid) * speed * (reverse ? -1 : 1)
+        const amount = Math.max(-clamp, Math.min(clamp, raw))
+        state.el.style.transform = axis === 'x'
+          ? `translate3d(${amount.toFixed(2)}px, 0, 0)`
+          : `translate3d(0, ${amount.toFixed(2)}px, 0)`
+      })
+      frame = 0
+    }
+
+    function update() {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        read()
+        write()
+      })
+    }
+
+    states.forEach(state => { state.el.style.willChange = 'transform' })
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        const state = states.find(item => item.el === entry.target)
+        if (!state) return
+        state.visible = entry.isIntersecting
+      })
+      update()
+    }, { rootMargin })
+
+    states.forEach(state => observer.observe(state.el))
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    update()
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      observer.disconnect()
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+      states.forEach(state => {
+        state.el.style.transform = state.originalTransform
+        state.el.style.willChange = state.originalWillChange
+      })
+    }
+  }
+
+  function restartParallax() {
+    while (parallaxCleanups.length) parallaxCleanups.pop()()
+    parallaxCleanups.push(
+      createParallax('.js-parallax-y', { speed: 0.34, clamp: 150, rootMargin: '20% 0px' }),
+      createParallax('.js-parallax-x', { axis: 'x', reverse: true, speed: 0.26, clamp: 110, rootMargin: '20% 0px' }),
+    )
   }
 
   // ── Text reveal split + animate
@@ -497,6 +671,9 @@
     obs.observe(el)
   })
 
+  // Parallax
+  restartParallax()
+
   updateProgress()
 
   // ── Replay handlers
@@ -527,6 +704,9 @@
     },
     zoom() {
       document.querySelectorAll('#zoom-demo .zoom-card').forEach((el,i) => animateZoomEl(el, { delay: i*120 }))
+    },
+    parallax() {
+      restartParallax()
     },
   }
 
