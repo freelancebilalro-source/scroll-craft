@@ -4,10 +4,10 @@
   "description": "Tiny TypeScript scroll animation library — reveal, counter, and progress effects with zero dependencies",
   "author": "Bilal <hello@bilalstudio.io>",
   "license": "MIT",
-  "homepage": "https://github.com/bilalstudio/scroll-craft#readme",
+  "homepage": "https://github.com/Bilal-Studios/scroll-craft#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bilalstudio/scroll-craft.git"
+    "url": "https://github.com/Bilal-Studios/scroll-craft.git"
   },
   "keywords": [
     "scroll",
