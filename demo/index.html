@@ -205,6 +205,49 @@
       line-height: 1.7;
     }
 
+    /* ── Zoom demo ── */
+    .zoom-stage {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+    .zoom-card {
+      min-height: 280px;
+      padding: 30px;
+      display: grid;
+      align-content: end;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255,0,200,0.2), transparent 32%),
+        linear-gradient(145deg, rgba(0,255,209,0.11), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+    .zoom-card--alt {
+      background:
+        radial-gradient(circle at 80% 20%, rgba(255,209,102,0.25), transparent 30%),
+        linear-gradient(145deg, rgba(255,255,255,0.08), rgba(0,255,209,0.04));
+    }
+    .zoom-number {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(4rem, 12vw, 7.5rem);
+      font-weight: 900;
+      line-height: 0.8;
+      color: var(--cyan);
+      margin-bottom: 28px;
+    }
+    .zoom-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+    .zoom-copy { color: var(--muted); line-height: 1.65; }
+    @media (max-width: 720px) {
+      .zoom-stage { grid-template-columns: 1fr; }
+    }
+
     /* ── Code snippet ── */
     .code-block {
       background: var(--bg-alt);
@@ -248,7 +291,7 @@
 <section class="hero" style="position:relative;">
   <p class="hero-eyebrow js-reveal">scroll-craft v0.1</p>
   <h1 class="js-reveal" style="--delay:80">Scroll<br/><em>animation</em><br/>that ships.</h1>
-  <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. IntersectionObserver-powered reveals, animated counters, scroll-progress fills, child staggers, and text reveals — all in TypeScript.</p>
+  <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. IntersectionObserver-powered reveals, animated counters, scroll-progress fills, child staggers, zooms, and text reveals — all in TypeScript.</p>
   <div class="badge-row js-reveal" style="--delay:240">
     <span class="badge">0 dependencies</span>
     <span class="badge">~4KB minified</span>
@@ -485,11 +528,44 @@
 
 <div class="divider"></div>
 
+<!-- ── Zoom ─────────────────────────────────────────────────────────────────── -->
+<section id="zoom">
+  <p class="label js-reveal">Effect 07</p>
+  <h2 class="js-reveal" style="--delay:60">Zoom</h2>
+  <p class="desc js-reveal" style="--delay:120">Scale elements from a smaller starting point while fading them into view.</p>
+
+  <div class="zoom-stage">
+    <article class="zoom-card js-zoom">
+      <div class="zoom-number">01</div>
+      <h3 class="zoom-title">Composited scale</h3>
+      <p class="zoom-copy">Opacity and transform stay on the compositor path for smooth card and media reveals.</p>
+    </article>
+    <article class="zoom-card zoom-card--alt js-zoom">
+      <div class="zoom-number">02</div>
+      <h3 class="zoom-title">Centered origin</h3>
+      <p class="zoom-copy">The effect sets transform-origin to center while it runs, then restores your inline styles on cleanup.</p>
+    </article>
+  </div>
+
+  <div class="code-block js-reveal" style="--delay:80">
+<span class="kw">import</span> { <span class="fn">zoom</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">zoom</span>(<span class="str">'.product-card'</span>, {
+  from:     0.94,
+  to:       1,
+  duration: 600,
+  ease:     <span class="str">'cubicOut'</span>,
+})
+  </div>
+</section>
+
+<div class="divider"></div>
+
 <!-- ── Class API ─────────────────────────────────────────────────────────────── -->
 <section id="api">
   <p class="label js-reveal">API</p>
   <h2 class="js-reveal" style="--delay:60">Chainable class</h2>
-  <p class="desc js-reveal" style="--delay:120">All six effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
+  <p class="desc js-reveal" style="--delay:120">All seven effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
 
   <div class="code-block js-reveal" style="--delay:80">
 <span class="kw">import</span> { <span class="fn">ScrollCraft</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
@@ -502,6 +578,7 @@ sc.<span class="fn">reveal</span>(<span class="str">'.hero-text'</span>, { delay
   .<span class="fn">progress</span>(<span class="str">'#timeline .step'</span>)
   .<span class="fn">stagger</span>(<span class="str">'.feature-grid'</span>, { children: <span class="str">'.card'</span> })
   .<span class="fn">textReveal</span>(<span class="str">'.headline'</span>, { type: <span class="str">'words'</span> })
+  .<span class="fn">zoom</span>(<span class="str">'.product-card'</span>, { from: 0.94 })
 
 <span class="cm">// Later — disconnect all observers + listeners</span>
 sc.<span class="fn">destroy</span>()
@@ -744,6 +821,36 @@ sc.<span class="fn">destroy</span>()
     els.forEach(el => obs.observe(el))
   }
 
+  // ── Zoom ──
+  function animateZoom(selector, { from = 0.94, to = 1, duration = 600 } = {}) {
+    const els = [...document.querySelectorAll(selector)]
+    els.forEach(el => {
+      el.style.opacity = '0'
+      el.style.transform = `scale(${from})`
+      el.style.transformOrigin = 'center'
+      el.style.willChange = 'opacity, transform'
+    })
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return
+        const el = entry.target
+        const start = performance.now()
+        function step(now) {
+          const p = Math.min(1, (now - start) / duration)
+          const e = ease.cubicOut(p)
+          el.style.opacity = e
+          el.style.transform = `scale(${from + ((to - from) * e)})`
+          if (p < 1) requestAnimationFrame(step)
+          else { el.style.opacity = '1'; el.style.transform = `scale(${to})`; el.style.transformOrigin = 'center'; el.style.willChange = 'auto' }
+        }
+        requestAnimationFrame(step)
+        el.classList.add('sc-in')
+        obs.unobserve(el)
+      })
+    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' })
+    els.forEach(el => obs.observe(el))
+  }
+
   // ── Init ──
   revealEls(document.querySelectorAll('.js-reveal'))
   revealEls(document.querySelectorAll('.js-reveal--left'),  { direction: 'left',  distance: '40px', easeFn: ease.elasticOut })
@@ -755,6 +862,7 @@ sc.<span class="fn">destroy</span>()
   animateTextReveal('.js-text-reveal-letters', { type: 'letters', stagger: 18 })
   animateStagger('.js-stagger', { children: '.stagger-tile' })
   animateBlurReveal('.js-blur-reveal')
+  animateZoom('.js-zoom')
 </script>
 
 </body>

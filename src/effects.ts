@@ -117,6 +117,25 @@ export interface BlurRevealOptions {
   inClass?: string
 }
 
+export interface ZoomOptions {
+  /** Initial scale before reveal. Default: 0.94 */
+  from?: number
+  /** Final scale after reveal. Default: 1 */
+  to?: number
+  /** Animation duration in ms. Default: 600 */
+  duration?: number
+  /** Easing function name or custom fn. Default: 'cubicOut' */
+  ease?: EaseName | EaseFn
+  /** Fraction of element visible before triggering. Default: 0.12 */
+  threshold?: number
+  /** Viewport margin to shrink trigger zone (CSS shorthand). Default: '0px 0px -10% 0px' */
+  rootMargin?: string
+  /** Whether to unobserve after first reveal. Default: true */
+  once?: boolean
+  /** CSS class added when in view. Default: 'sc-in' */
+  inClass?: string
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveElements(target: string | Element | NodeList | Element[]): Element[] {
@@ -177,6 +196,17 @@ type BlurRevealElementState = {
   opacity: string
   filter: string
   transform: string
+  willChange: string
+  hadInClass: boolean
+  running: boolean
+  token: number
+}
+
+type ZoomElementState = {
+  element: HTMLElement
+  opacity: string
+  transform: string
+  transformOrigin: string
   willChange: string
   hadInClass: boolean
   running: boolean
@@ -806,6 +836,161 @@ export function blurReveal(
       state.element.style.opacity = String(eased)
       state.element.style.filter = `blur(${blurValue * (1 - eased)}${blurUnit})`
       state.element.style.transform = `translateY(${distanceValue * (1 - eased)}${distanceUnit})`
+
+      if (progress < 1) {
+        const rafId = requestAnimationFrame(step)
+        rafIds.add(rafId)
+      } else {
+        finishState(state)
+        state.running = false
+      }
+    }
+
+    const rafId = requestAnimationFrame(step)
+    rafIds.add(rafId)
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const state = stateByElement.get(entry.target)
+        if (!state) return
+
+        if (!entry.isIntersecting) {
+          if (!once) {
+            state.running = false
+            state.token += 1
+            if (!state.hadInClass) state.element.classList.remove(inClass)
+            resetState(state)
+          }
+          return
+        }
+
+        state.element.classList.add(inClass)
+        animateState(state)
+        if (once) observer.unobserve(entry.target)
+      })
+    },
+    { threshold, rootMargin },
+  )
+
+  states.forEach((state) => observer.observe(state.element))
+
+  return () => {
+    observer.disconnect()
+    rafIds.forEach((rafId) => cancelAnimationFrame(rafId))
+    rafIds.clear()
+    states.forEach((state) => {
+      state.running = false
+      state.token += 1
+      if (!state.hadInClass) state.element.classList.remove(inClass)
+      restoreState(state)
+    })
+  }
+}
+
+// ─── zoom ────────────────────────────────────────────────────────────────────
+
+/**
+ * Reveals elements by animating opacity and transform scale.
+ * Returns a cleanup function that disconnects the observer and restores inline styles.
+ *
+ * @example
+ * const stop = zoom('.product-card', { from: 0.92, duration: 700 })
+ */
+export function zoom(
+  target: string | Element | NodeList | Element[],
+  options: ZoomOptions = {},
+): () => void {
+  const {
+    from = 0.94,
+    to = 1,
+    duration = 600,
+    ease = 'cubicOut',
+    threshold = 0.12,
+    rootMargin = '0px 0px -10% 0px',
+    once = true,
+    inClass = 'sc-in',
+  } = options
+
+  const easeFn = resolveEase(ease)
+  const elements = resolveElements(target) as HTMLElement[]
+  if (!elements.length) return () => {}
+
+  const states = elements.map<ZoomElementState>((element) => {
+    const state = {
+      element,
+      opacity: element.style.opacity,
+      transform: element.style.transform,
+      transformOrigin: element.style.transformOrigin,
+      willChange: element.style.willChange,
+      hadInClass: element.classList.contains(inClass),
+      running: false,
+      token: 0,
+    }
+
+    element.style.opacity = '0'
+    element.style.transform = `scale(${from})`
+    element.style.transformOrigin = 'center'
+    element.style.willChange = 'opacity, transform'
+
+    return state
+  })
+  const rafIds = new Set<number>()
+
+  function resetState(state: ZoomElementState): void {
+    state.element.style.opacity = '0'
+    state.element.style.transform = `scale(${from})`
+    state.element.style.transformOrigin = 'center'
+    state.element.style.willChange = 'opacity, transform'
+  }
+
+  function finishState(state: ZoomElementState): void {
+    state.element.style.opacity = '1'
+    state.element.style.transform = `scale(${to})`
+    state.element.style.transformOrigin = 'center'
+    state.element.style.willChange = 'auto'
+  }
+
+  function restoreState(state: ZoomElementState): void {
+    state.element.style.opacity = state.opacity
+    state.element.style.transform = state.transform
+    state.element.style.transformOrigin = state.transformOrigin
+    state.element.style.willChange = state.willChange
+  }
+
+  if (!('IntersectionObserver' in window)) {
+    states.forEach((state) => {
+      finishState(state)
+      state.element.classList.add(inClass)
+    })
+    return () => {
+      states.forEach((state) => {
+        if (!state.hadInClass) state.element.classList.remove(inClass)
+        restoreState(state)
+      })
+    }
+  }
+
+  const stateByElement = new Map<Element, ZoomElementState>(
+    states.map((state) => [state.element, state]),
+  )
+
+  function animateState(state: ZoomElementState): void {
+    if (state.running) return
+    state.running = true
+    state.token += 1
+    const token = state.token
+    const start = performance.now()
+
+    function step(now: number) {
+      if (token !== state.token) return
+
+      const progress = Math.min(1, (now - start) / duration)
+      const eased = easeFn(progress)
+      const scale = from + ((to - from) * eased)
+      state.element.style.opacity = String(eased)
+      state.element.style.transform = `scale(${scale})`
 
       if (progress < 1) {
         const rafId = requestAnimationFrame(step)

@@ -59,6 +59,7 @@ sc.reveal('.card')
   .progress('#timeline .step')
   .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline')
+  .zoom('.product-card')
 ```
 
 ---
@@ -203,6 +204,25 @@ stagger('.feature-grid', {
 </div>
 ```
 
+### Zoom
+
+Reveal elements by fading them in while scaling from a smaller starting point.
+
+```ts
+import { zoom } from 'scroll-craft'
+
+zoom('.product-card', {
+  from: 0.94,
+  to: 1,
+  duration: 600,
+  ease: 'cubicOut',
+  threshold: 0.12,
+  rootMargin: '0px 0px -10% 0px',
+  once: true,
+  inClass: 'sc-in',
+})
+```
+
 ---
 
 ## Chainable API
@@ -220,6 +240,7 @@ sc.reveal('.hero-text', { delay: 100, direction: 'up' })
   .progress('#timeline .step')
   .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline', { type: 'words' })
+  .zoom('.product-card', { from: 0.94 })
 
 // Clean up
 sc.destroy()
@@ -302,6 +323,19 @@ sc.destroy()
 | `once` | `boolean` | `true` | Unobserve after first reveal |
 | `inClass` | `string` | `'sc-in'` | Class added to the parent when in view |
 
+### `zoom(target, options?)`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `from` | `number` | `0.94` | Initial scale before reveal |
+| `to` | `number` | `1` | Final scale after reveal |
+| `duration` | `number` | `600` | Animation duration (ms) |
+| `ease` | `EaseName \| EaseFn` | `'cubicOut'` | Easing function |
+| `threshold` | `number` | `0.12` | Visible fraction before trigger |
+| `rootMargin` | `string` | `'0px 0px -10% 0px'` | Observer root margin |
+| `once` | `boolean` | `true` | Unobserve after first reveal |
+| `inClass` | `string` | `'sc-in'` | Class added when in view |
+
 ---
 
 ## Easing Functions
@@ -328,7 +362,7 @@ You can also pass a custom function: `ease: (t) => t * t`
 scroll-craft/
 ├── src/
 │   ├── index.ts      — ScrollCraft class + re-exports
-│   ├── effects.ts    — blurReveal, reveal, counter, progress, stagger, textReveal
+│   ├── effects.ts    — blurReveal, reveal, counter, progress, stagger, textReveal, zoom
 │   └── easing.ts     — easing functions
 ├── dist/             — built output (ESM + CJS + .d.ts)
 ├── demo/

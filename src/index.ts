@@ -5,18 +5,20 @@ import {
   progress as _progress,
   stagger as _stagger,
   textReveal as _textReveal,
+  zoom as _zoom,
   type BlurRevealOptions,
   type RevealOptions,
   type CounterOptions,
   type ProgressOptions,
   type StaggerOptions,
   type TextRevealOptions,
+  type ZoomOptions,
 } from './effects'
 
-export type { BlurRevealOptions, RevealOptions, CounterOptions, ProgressOptions, StaggerOptions, TextRevealOptions, Direction } from './effects'
+export type { BlurRevealOptions, RevealOptions, CounterOptions, ProgressOptions, StaggerOptions, TextRevealOptions, ZoomOptions, Direction } from './effects'
 export type { EaseName, EaseFn } from './easing'
 export { easings, resolveEase } from './easing'
-export { blurReveal, reveal, counter, progress, stagger, textReveal } from './effects'
+export { blurReveal, reveal, counter, progress, stagger, textReveal, zoom } from './effects'
 
 // ─── Class API ────────────────────────────────────────────────────────────────
 
@@ -33,6 +35,7 @@ type Target = string | Element | NodeList | Element[]
  *   .progress('#timeline .step')
  *   .stagger('.feature-grid')
  *   .textReveal('.headline')
+ *   .zoom('.product-card')
  */
 export class ScrollCraft {
   private cleanups: Array<() => void> = []
@@ -64,6 +67,11 @@ export class ScrollCraft {
 
   textReveal(target: Target, options?: TextRevealOptions): this {
     this.cleanups.push(_textReveal(target, options))
+    return this
+  }
+
+  zoom(target: Target, options?: ZoomOptions): this {
+    this.cleanups.push(_zoom(target, options))
     return this
   }
 
