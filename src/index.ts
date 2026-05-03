@@ -2,17 +2,19 @@ import {
   reveal as _reveal,
   counter as _counter,
   progress as _progress,
+  stagger as _stagger,
   textReveal as _textReveal,
   type RevealOptions,
   type CounterOptions,
   type ProgressOptions,
+  type StaggerOptions,
   type TextRevealOptions,
 } from './effects'
 
-export type { RevealOptions, CounterOptions, ProgressOptions, TextRevealOptions, Direction } from './effects'
+export type { RevealOptions, CounterOptions, ProgressOptions, StaggerOptions, TextRevealOptions, Direction } from './effects'
 export type { EaseName, EaseFn } from './easing'
 export { easings, resolveEase } from './easing'
-export { reveal, counter, progress, textReveal } from './effects'
+export { reveal, counter, progress, stagger, textReveal } from './effects'
 
 // ─── Class API ────────────────────────────────────────────────────────────────
 
@@ -26,6 +28,7 @@ type Target = string | Element | NodeList | Element[]
  * sc.reveal('.hero-text', { delay: 100 })
  *   .counter('[data-count]', { duration: 1200 })
  *   .progress('#timeline .step')
+ *   .stagger('.feature-grid')
  *   .textReveal('.headline')
  */
 export class ScrollCraft {
@@ -46,6 +49,11 @@ export class ScrollCraft {
     return this
   }
 
+  stagger(target: Target, options?: StaggerOptions): this {
+    this.cleanups.push(_stagger(target, options))
+    return this
+  }
+
   textReveal(target: Target, options?: TextRevealOptions): this {
     this.cleanups.push(_textReveal(target, options))
     return this
@@ -57,4 +65,3 @@ export class ScrollCraft {
     this.cleanups = []
   }
 }
-

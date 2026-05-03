@@ -131,6 +131,37 @@
       line-height: 1.7;
     }
 
+    /* ── Stagger demo ── */
+    .stagger-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .stagger-tile {
+      min-height: 150px;
+      padding: 24px;
+      background:
+        linear-gradient(160deg, rgba(0,255,209,0.12), rgba(255,0,200,0.08)),
+        var(--bg-alt);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+    }
+    .stagger-kicker {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .stagger-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .stagger-copy { color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
+
     /* ── Code snippet ── */
     .code-block {
       background: var(--bg-alt);
@@ -174,7 +205,7 @@
 <section class="hero" style="position:relative;">
   <p class="hero-eyebrow js-reveal">scroll-craft v0.1</p>
   <h1 class="js-reveal" style="--delay:80">Scroll<br/><em>animation</em><br/>that ships.</h1>
-  <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. IntersectionObserver-powered reveals, animated counters, scroll-progress fills, and staggered text reveals — all in TypeScript.</p>
+  <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. IntersectionObserver-powered reveals, animated counters, scroll-progress fills, child staggers, and text reveals — all in TypeScript.</p>
   <div class="badge-row js-reveal" style="--delay:240">
     <span class="badge">0 dependencies</span>
     <span class="badge">~4KB minified</span>
@@ -346,11 +377,50 @@
 
 <div class="divider"></div>
 
+<!-- ── Stagger ──────────────────────────────────────────────────────────────── -->
+<section id="stagger">
+  <p class="label js-reveal">Effect 05</p>
+  <h2 class="js-reveal" style="--delay:60">Stagger</h2>
+  <p class="desc js-reveal" style="--delay:120">Watch a parent and reveal its children one after another using only transform and opacity.</p>
+
+  <div class="stagger-board js-stagger">
+    <article class="stagger-tile">
+      <p class="stagger-kicker">01</p>
+      <h3 class="stagger-title">Resolve once</h3>
+      <p class="stagger-copy">Children are selected before observing, so the animation does not measure layout during frames.</p>
+    </article>
+    <article class="stagger-tile">
+      <p class="stagger-kicker">02</p>
+      <h3 class="stagger-title">Sequence cleanly</h3>
+      <p class="stagger-copy">Each child starts after the configured delay, creating a simple cascading reveal.</p>
+    </article>
+    <article class="stagger-tile">
+      <p class="stagger-kicker">03</p>
+      <h3 class="stagger-title">Clean up</h3>
+      <p class="stagger-copy">The standalone effect returns a cleanup function, and the class API tracks it through destroy().</p>
+    </article>
+  </div>
+
+  <div class="code-block js-reveal" style="--delay:80">
+<span class="kw">import</span> { <span class="fn">stagger</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">stagger</span>(<span class="str">'.feature-grid'</span>, {
+  children:  <span class="str">'.card'</span>,
+  direction: <span class="str">'up'</span>,
+  distance:  <span class="str">'24px'</span>,
+  stagger:   80,
+  duration:  600,
+})
+  </div>
+</section>
+
+<div class="divider"></div>
+
 <!-- ── Class API ─────────────────────────────────────────────────────────────── -->
 <section id="api">
   <p class="label js-reveal">API</p>
   <h2 class="js-reveal" style="--delay:60">Chainable class</h2>
-  <p class="desc js-reveal" style="--delay:120">All four effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
+  <p class="desc js-reveal" style="--delay:120">All five effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
 
   <div class="code-block js-reveal" style="--delay:80">
 <span class="kw">import</span> { <span class="fn">ScrollCraft</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
@@ -360,6 +430,7 @@
 sc.<span class="fn">reveal</span>(<span class="str">'.hero-text'</span>, { delay: 100, direction: <span class="str">'up'</span> })
   .<span class="fn">counter</span>(<span class="str">'[data-count]'</span>, { duration: 1200 })
   .<span class="fn">progress</span>(<span class="str">'#timeline .step'</span>)
+  .<span class="fn">stagger</span>(<span class="str">'.feature-grid'</span>, { children: <span class="str">'.card'</span> })
   .<span class="fn">textReveal</span>(<span class="str">'.headline'</span>, { type: <span class="str">'words'</span> })
 
 <span class="cm">// Later — disconnect all observers + listeners</span>
@@ -522,6 +593,52 @@ sc.<span class="fn">destroy</span>()
     states.forEach(state => obs.observe(state.el))
   }
 
+  // ── Stagger ──
+  function animateStagger(selector, { children = ':scope > *', direction = 'up', distance = '24px', stagger = 80, duration = 600 } = {}) {
+    const initial = direction === 'left' ? `translateX(${distance})`
+      : direction === 'right' ? `translateX(-${distance})`
+      : direction === 'down' ? `translateY(-${distance})`
+      : `translateY(${distance})`
+    const dist = parseFloat(distance)
+    const unit = distance.replace(/[\d.-]/g, '') || 'px'
+    const states = [...document.querySelectorAll(selector)].map(parent => {
+      const childEls = [...parent.querySelectorAll(children)]
+      childEls.forEach(child => {
+        child.style.opacity = '0'
+        child.style.transform = initial
+        child.style.willChange = 'opacity, transform'
+      })
+      return { parent, children: childEls }
+    })
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return
+        const state = states.find(s => s.parent === entry.target)
+        if (!state) return
+        state.children.forEach((child, index) => {
+          const start = performance.now() + index * stagger
+          function step(now) {
+            if (now < start) { requestAnimationFrame(step); return }
+            const p = Math.min(1, (now - start) / duration)
+            const e = ease.cubicOut(p)
+            const offset = dist * (1 - e)
+            child.style.opacity = e
+            child.style.transform = direction === 'left' ? `translateX(${offset}${unit})`
+              : direction === 'right' ? `translateX(${-offset}${unit})`
+              : direction === 'down' ? `translateY(${-offset}${unit})`
+              : `translateY(${offset}${unit})`
+            if (p < 1) requestAnimationFrame(step)
+            else { child.style.opacity = '1'; child.style.transform = 'none'; child.style.willChange = 'auto' }
+          }
+          requestAnimationFrame(step)
+        })
+        entry.target.classList.add('sc-in')
+        obs.unobserve(entry.target)
+      })
+    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' })
+    states.forEach(state => obs.observe(state.parent))
+  }
+
   // ── Init ──
   revealEls(document.querySelectorAll('.js-reveal'))
   revealEls(document.querySelectorAll('.js-reveal--left'),  { direction: 'left',  distance: '40px', easeFn: ease.elasticOut })
@@ -531,6 +648,7 @@ sc.<span class="fn">destroy</span>()
   animateProgress()
   animateTextReveal('.js-text-reveal')
   animateTextReveal('.js-text-reveal-letters', { type: 'letters', stagger: 18 })
+  animateStagger('.js-stagger', { children: '.stagger-tile' })
 </script>
 
 </body>

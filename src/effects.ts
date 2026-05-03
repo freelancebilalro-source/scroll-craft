@@ -75,12 +75,45 @@ export interface TextRevealOptions {
   inClass?: string
 }
 
+export interface StaggerOptions {
+  /** Selector for child elements to animate inside each target. Default: ':scope > *' */
+  children?: string
+  /** Which direction children enter from. Default: 'up' */
+  direction?: Direction
+  /** How far each child travels before settling. Default: '24px' */
+  distance?: string
+  /** Delay between each child animation in ms. Default: 80 */
+  stagger?: number
+  /** Animation duration for each child in ms. Default: 600 */
+  duration?: number
+  /** Easing function name or custom fn. Default: 'cubicOut' */
+  ease?: EaseName | EaseFn
+  /** Fraction of parent visible before triggering. Default: 0.12 */
+  threshold?: number
+  /** Viewport margin to shrink trigger zone (CSS shorthand). Default: '0px 0px -10% 0px' */
+  rootMargin?: string
+  /** Whether to unobserve after first reveal. Default: true */
+  once?: boolean
+  /** CSS class added to the parent when in view. Default: 'sc-in' */
+  inClass?: string
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveElements(target: string | Element | NodeList | Element[]): Element[] {
   if (typeof target === 'string') return Array.from(document.querySelectorAll(target))
   if (target instanceof Element) return [target]
   return Array.from(target as NodeList) as Element[]
+}
+
+function resolveChildElements(parent: Element, selector: string): HTMLElement[] {
+  try {
+    return Array.from(parent.querySelectorAll(selector)) as HTMLElement[]
+  } catch {
+    return selector === ':scope > *'
+      ? Array.from(parent.children) as HTMLElement[]
+      : []
+  }
 }
 
 function directionToTransform(direction: Direction, distance: string): string {
@@ -90,6 +123,34 @@ function directionToTransform(direction: Direction, distance: string): string {
     case 'left':  return `translateX(${distance})`
     case 'right': return `translateX(-${distance})`
   }
+}
+
+function transformForProgress(direction: Direction, distance: string, progress: number): string {
+  const value = parseFloat(distance)
+  const unit = distance.replace(/[\d.-]/g, '') || 'px'
+  const offset = value * (1 - progress)
+
+  switch (direction) {
+    case 'left':  return `translateX(${offset}${unit})`
+    case 'right': return `translateX(${-offset}${unit})`
+    case 'down':  return `translateY(${-offset}${unit})`
+    case 'up':    return `translateY(${offset}${unit})`
+  }
+}
+
+type StaggerChildState = {
+  element: HTMLElement
+  opacity: string
+  transform: string
+  willChange: string
+}
+
+type StaggerElementState = {
+  parent: HTMLElement
+  children: StaggerChildState[]
+  parentHadInClass: boolean
+  running: boolean
+  token: number
 }
 
 type TextRevealSplit = {
@@ -416,6 +477,197 @@ export function progress(
   update()
 
   return () => window.removeEventListener('scroll', update)
+}
+
+// ─── stagger ─────────────────────────────────────────────────────────────────
+
+/**
+ * Watches parent elements and animates their children sequentially when the parent enters the viewport.
+ * Returns a cleanup function that disconnects the observer and restores child inline styles.
+ *
+ * @example
+ * const stop = stagger('.feature-grid', { children: '.card', stagger: 90 })
+ */
+export function stagger(
+  target: string | Element | NodeList | Element[],
+  options: StaggerOptions = {},
+): () => void {
+  const {
+    children = ':scope > *',
+    direction = 'up',
+    distance = '24px',
+    stagger = 80,
+    duration = 600,
+    ease = 'cubicOut',
+    threshold = 0.12,
+    rootMargin = '0px 0px -10% 0px',
+    once = true,
+    inClass = 'sc-in',
+  } = options
+
+  const easeFn = resolveEase(ease)
+  const parents = resolveElements(target) as HTMLElement[]
+  if (!parents.length) return () => {}
+
+  const states = parents.map<StaggerElementState>((parent) => {
+    const childElements = resolveChildElements(parent, children)
+    const childStates = childElements.map((element) => ({
+      element,
+      opacity: element.style.opacity,
+      transform: element.style.transform,
+      willChange: element.style.willChange,
+    }))
+
+    childStates.forEach(({ element }) => {
+      element.style.opacity = '0'
+      element.style.transform = directionToTransform(direction, distance)
+      element.style.willChange = 'opacity, transform'
+    })
+
+    return {
+      parent,
+      children: childStates,
+      parentHadInClass: parent.classList.contains(inClass),
+      running: false,
+      token: 0,
+    }
+  }).filter((state) => state.children.length > 0)
+
+  const rafIds = new Set<number>()
+  if (!states.length) return () => {}
+
+  function resetChildren(state: StaggerElementState): void {
+    state.children.forEach(({ element }) => {
+      element.style.opacity = '0'
+      element.style.transform = directionToTransform(direction, distance)
+      element.style.willChange = 'opacity, transform'
+    })
+  }
+
+  function finishChildren(state: StaggerElementState): void {
+    state.children.forEach(({ element }) => {
+      element.style.opacity = '1'
+      element.style.transform = 'none'
+      element.style.willChange = 'auto'
+    })
+  }
+
+  function restoreChildren(state: StaggerElementState): void {
+    state.children.forEach(({ element, opacity, transform, willChange }) => {
+      element.style.opacity = opacity
+      element.style.transform = transform
+      element.style.willChange = willChange
+    })
+  }
+
+  if (!('IntersectionObserver' in window)) {
+    states.forEach((state) => {
+      finishChildren(state)
+      state.parent.classList.add(inClass)
+    })
+    return () => {
+      states.forEach((state) => {
+        if (!state.parentHadInClass) state.parent.classList.remove(inClass)
+        restoreChildren(state)
+      })
+    }
+  }
+
+  const stateByParent = new Map<Element, StaggerElementState>(
+    states.map((state) => [state.parent, state]),
+  )
+
+  function animateChild(
+    child: HTMLElement,
+    delay: number,
+    state: StaggerElementState,
+    token: number,
+    onDone: () => void,
+  ): void {
+    const start = performance.now() + delay
+
+    function step(now: number) {
+      if (token !== state.token) return
+
+      if (now < start) {
+        const rafId = requestAnimationFrame(step)
+        rafIds.add(rafId)
+        return
+      }
+
+      const progress = Math.min(1, (now - start) / duration)
+      const eased = easeFn(progress)
+      child.style.opacity = String(eased)
+      child.style.transform = transformForProgress(direction, distance, eased)
+
+      if (progress < 1) {
+        const rafId = requestAnimationFrame(step)
+        rafIds.add(rafId)
+      } else {
+        child.style.opacity = '1'
+        child.style.transform = 'none'
+        child.style.willChange = 'auto'
+        onDone()
+      }
+    }
+
+    const rafId = requestAnimationFrame(step)
+    rafIds.add(rafId)
+  }
+
+  function animateState(state: StaggerElementState): void {
+    if (state.running) return
+    state.running = true
+    state.token += 1
+    const token = state.token
+    let remaining = state.children.length
+
+    state.children.forEach(({ element }, index) => {
+      animateChild(element, index * stagger, state, token, () => {
+        if (token !== state.token) return
+        remaining -= 1
+        if (remaining === 0) state.running = false
+      })
+    })
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const state = stateByParent.get(entry.target)
+        if (!state) return
+
+        if (!entry.isIntersecting) {
+          if (!once) {
+            state.running = false
+            state.token += 1
+            if (!state.parentHadInClass) state.parent.classList.remove(inClass)
+            resetChildren(state)
+          }
+          return
+        }
+
+        state.parent.classList.add(inClass)
+        animateState(state)
+        if (once) observer.unobserve(entry.target)
+      })
+    },
+    { threshold, rootMargin },
+  )
+
+  states.forEach((state) => observer.observe(state.parent))
+
+  return () => {
+    observer.disconnect()
+    rafIds.forEach((rafId) => cancelAnimationFrame(rafId))
+    rafIds.clear()
+    states.forEach((state) => {
+      state.running = false
+      state.token += 1
+      if (!state.parentHadInClass) state.parent.classList.remove(inClass)
+      restoreChildren(state)
+    })
+  }
 }
 
 // ─── textReveal ──────────────────────────────────────────────────────────────

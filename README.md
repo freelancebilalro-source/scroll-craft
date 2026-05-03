@@ -56,6 +56,7 @@ const sc = new ScrollCraft()
 sc.reveal('.card')
   .counter('[data-count]', { duration: 1400 })
   .progress('#timeline .step')
+  .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline')
 ```
 
@@ -153,6 +154,35 @@ textReveal('.eyebrow', {
 
 The effect splits text nodes instead of replacing nested elements wholesale, so inline semantics such as links and emphasis stay in place where possible. Plain-text targets get an accessible label while animation spans are hidden from assistive technology.
 
+### Stagger
+
+Animate child elements sequentially when their parent enters the viewport.
+
+```ts
+import { stagger } from 'scroll-craft'
+
+stagger('.feature-grid', {
+  children: ':scope > *',
+  direction: 'up',
+  distance: '24px',
+  stagger: 80,
+  duration: 600,
+  ease: 'cubicOut',
+  threshold: 0.12,
+  rootMargin: '0px 0px -10% 0px',
+  once: true,
+  inClass: 'sc-in',
+})
+```
+
+```html
+<div class="feature-grid">
+  <article>First card</article>
+  <article>Second card</article>
+  <article>Third card</article>
+</div>
+```
+
 ---
 
 ## Chainable API
@@ -167,6 +197,7 @@ const sc = new ScrollCraft()
 sc.reveal('.hero-text', { delay: 100, direction: 'up' })
   .counter('[data-count]', { duration: 1200 })
   .progress('#timeline .step')
+  .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline', { type: 'words' })
 
 // Clean up
@@ -222,6 +253,21 @@ sc.destroy()
 | `once` | `boolean` | `true` | Unobserve after first reveal |
 | `inClass` | `string` | `'sc-in'` | Class added when in view |
 
+### `stagger(target, options?)`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `children` | `string` | `':scope > *'` | Child selector resolved inside each target |
+| `direction` | `'up' \| 'down' \| 'left' \| 'right'` | `'up'` | Entry direction for each child |
+| `distance` | `string` | `'24px'` | Travel distance for each child |
+| `stagger` | `number` | `80` | Delay between each child animation (ms) |
+| `duration` | `number` | `600` | Animation duration per child (ms) |
+| `ease` | `EaseName \| EaseFn` | `'cubicOut'` | Easing function |
+| `threshold` | `number` | `0.12` | Parent visible fraction before trigger |
+| `rootMargin` | `string` | `'0px 0px -10% 0px'` | Observer root margin |
+| `once` | `boolean` | `true` | Unobserve after first reveal |
+| `inClass` | `string` | `'sc-in'` | Class added to the parent when in view |
+
 ---
 
 ## Easing Functions
@@ -248,7 +294,7 @@ You can also pass a custom function: `ease: (t) => t * t`
 scroll-craft/
 ├── src/
 │   ├── index.ts      — ScrollCraft class + re-exports
-│   ├── effects.ts    — reveal, counter, progress, textReveal
+│   ├── effects.ts    — reveal, counter, progress, stagger, textReveal
 │   └── easing.ts     — easing functions
 ├── dist/             — built output (ESM + CJS + .d.ts)
 ├── demo/
