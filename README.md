@@ -56,6 +56,7 @@ const sc = new ScrollCraft()
 sc.reveal('.card')
   .blurReveal('.panel')
   .counter('[data-count]', { duration: 1400 })
+  .parallax('.hero-orb')
   .progress('#timeline .step')
   .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline')
@@ -147,6 +148,24 @@ progress('#timeline .step', {
 </div>
 ```
 
+### Parallax
+
+Move elements based on scroll position using `translate3d(...)`.
+
+```ts
+import { parallax } from 'scroll-craft'
+
+parallax('.hero-orb', {
+  speed: 0.25,
+  axis: 'y',
+  reverse: false,
+  clamp: 120,
+  rootMargin: '0px',
+})
+```
+
+The effect batches layout reads, writes transforms in `requestAnimationFrame`, and disables movement for users with `prefers-reduced-motion: reduce`.
+
 ### Text Reveal
 
 Split text into word or letter spans and reveal each piece with a staggered scroll animation.
@@ -237,6 +256,7 @@ const sc = new ScrollCraft()
 sc.reveal('.hero-text', { delay: 100, direction: 'up' })
   .blurReveal('.panel', { blur: '12px' })
   .counter('[data-count]', { duration: 1200 })
+  .parallax('.hero-orb', { speed: 0.2 })
   .progress('#timeline .step')
   .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline', { type: 'words' })
@@ -294,6 +314,16 @@ sc.destroy()
 | `start` | `number` | `0.82` | Viewport fraction where fill begins |
 | `end` | `number` | `0.2` | Viewport fraction where fill ends |
 | `fillSelector` | `string` | `'.sc-fill'` | Child element to animate |
+
+### `parallax(target, options?)`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `speed` | `number` | `0.25` | Scroll movement multiplier |
+| `axis` | `'y' \| 'x'` | `'y'` | Axis to move on |
+| `reverse` | `boolean` | `false` | Invert movement direction |
+| `clamp` | `number` | `120` | Maximum absolute translation in px |
+| `rootMargin` | `string` | `'0px'` | Observer root margin for relevance tracking |
 
 ### `textReveal(target, options?)`
 
@@ -362,7 +392,7 @@ You can also pass a custom function: `ease: (t) => t * t`
 scroll-craft/
 ├── src/
 │   ├── index.ts      — ScrollCraft class + re-exports
-│   ├── effects.ts    — blurReveal, reveal, counter, progress, stagger, textReveal, zoom
+│   ├── effects.ts    — blurReveal, reveal, counter, parallax, progress, stagger, textReveal, zoom
 │   └── easing.ts     — easing functions
 ├── dist/             — built output (ESM + CJS + .d.ts)
 ├── demo/

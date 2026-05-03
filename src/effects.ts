@@ -136,6 +136,19 @@ export interface ZoomOptions {
   inClass?: string
 }
 
+export interface ParallaxOptions {
+  /** Scroll movement multiplier. Default: 0.25 */
+  speed?: number
+  /** Axis to move on. Default: 'y' */
+  axis?: 'y' | 'x'
+  /** Invert movement direction. Default: false */
+  reverse?: boolean
+  /** Maximum absolute translation in px. Default: 120 */
+  clamp?: number
+  /** Viewport margin for relevance tracking. Default: '0px' */
+  rootMargin?: string
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveElements(target: string | Element | NodeList | Element[]): Element[] {
@@ -211,6 +224,22 @@ type ZoomElementState = {
   hadInClass: boolean
   running: boolean
   token: number
+}
+
+type ParallaxElementState = {
+  element: HTMLElement
+  transform: string
+  willChange: string
+  top: number
+  left: number
+  width: number
+  height: number
+  visible: boolean
+}
+
+type LegacyMediaQueryList = MediaQueryList & {
+  addListener?: (listener: (event: MediaQueryListEvent) => void) => void
+  removeListener?: (listener: (event: MediaQueryListEvent) => void) => void
 }
 
 type TextRevealSplit = {
@@ -537,6 +566,176 @@ export function progress(
   update()
 
   return () => window.removeEventListener('scroll', update)
+}
+
+// ─── parallax ────────────────────────────────────────────────────────────────
+
+/**
+ * Moves elements based on scroll position using translate3d.
+ * Returns a cleanup function that removes listeners, disconnects observers, and restores inline transforms.
+ *
+ * @example
+ * const stop = parallax('.hero-orb', { speed: 0.2, clamp: 90 })
+ */
+export function parallax(
+  target: string | Element | NodeList | Element[],
+  options: ParallaxOptions = {},
+): () => void {
+  const {
+    speed = 0.25,
+    axis = 'y',
+    reverse = false,
+    clamp = 120,
+    rootMargin = '0px',
+  } = options
+
+  const elements = resolveElements(target) as HTMLElement[]
+  if (!elements.length) return () => {}
+
+  const states = elements.map<ParallaxElementState>((element) => ({
+    element,
+    transform: element.style.transform,
+    willChange: element.style.willChange,
+    top: 0,
+    left: 0,
+    width: 0,
+    height: 0,
+    visible: !('IntersectionObserver' in window),
+  }))
+
+  const reduceMotion = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null
+  let rafId: number | null = null
+  let observer: IntersectionObserver | null = null
+
+  function restore(): void {
+    states.forEach((state) => {
+      state.element.style.transform = state.transform
+      state.element.style.willChange = state.willChange
+    })
+  }
+
+  function measure(): void {
+    const scrollX = window.scrollX || window.pageXOffset
+    const scrollY = window.scrollY || window.pageYOffset
+
+    states.forEach((state) => {
+      const rect = state.element.getBoundingClientRect()
+      state.top = rect.top + scrollY
+      state.left = rect.left + scrollX
+      state.width = rect.width
+      state.height = rect.height
+    })
+  }
+
+  function write(): void {
+    rafId = null
+
+    if (reduceMotion?.matches) {
+      restore()
+      return
+    }
+
+    const scrollX = window.scrollX || window.pageXOffset
+    const scrollY = window.scrollY || window.pageYOffset
+    const viewportCenterX = scrollX + (window.innerWidth / 2)
+    const viewportCenterY = scrollY + (window.innerHeight / 2)
+    const direction = reverse ? -1 : 1
+
+    states.forEach((state) => {
+      if (!state.visible) return
+
+      const elementCenter = axis === 'y'
+        ? state.top + (state.height / 2)
+        : state.left + (state.width / 2)
+      const viewportCenter = axis === 'y' ? viewportCenterY : viewportCenterX
+      const raw = (viewportCenter - elementCenter) * speed * direction
+      const offset = Math.max(-clamp, Math.min(clamp, raw))
+      const x = axis === 'x' ? offset : 0
+      const y = axis === 'y' ? offset : 0
+
+      state.element.style.transform = `translate3d(${x}px, ${y}px, 0)`
+      state.element.style.willChange = 'transform'
+    })
+  }
+
+  function schedule(): void {
+    if (rafId !== null) return
+    rafId = requestAnimationFrame(write)
+  }
+
+  function handleResize(): void {
+    measure()
+    schedule()
+  }
+
+  function handleMotionChange(): void {
+    if (reduceMotion?.matches) {
+      restore()
+      return
+    }
+
+    measure()
+    schedule()
+  }
+
+  measure()
+
+  if (reduceMotion?.matches) {
+    restore()
+  } else {
+    states.forEach((state) => {
+      state.element.style.willChange = 'transform'
+    })
+    schedule()
+  }
+
+  if ('IntersectionObserver' in window) {
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const state = states.find((item) => item.element === entry.target)
+          if (!state) return
+          state.visible = entry.isIntersecting
+        })
+        schedule()
+      },
+      { rootMargin },
+    )
+    states.forEach((state) => observer?.observe(state.element))
+  }
+
+  window.addEventListener('scroll', schedule, { passive: true })
+  window.addEventListener('resize', handleResize)
+
+  if (reduceMotion) {
+    if ('addEventListener' in reduceMotion) {
+      reduceMotion.addEventListener('change', handleMotionChange)
+    } else {
+      const legacyReduceMotion = reduceMotion as LegacyMediaQueryList
+      legacyReduceMotion.addListener?.(handleMotionChange)
+    }
+  }
+
+  return () => {
+    if (rafId !== null) cancelAnimationFrame(rafId)
+    rafId = null
+    observer?.disconnect()
+    window.removeEventListener('scroll', schedule)
+    window.removeEventListener('resize', handleResize)
+
+    if (reduceMotion) {
+      if ('removeEventListener' in reduceMotion) {
+        reduceMotion.removeEventListener('change', handleMotionChange)
+      } else {
+        const legacyReduceMotion = reduceMotion as LegacyMediaQueryList
+        legacyReduceMotion.removeListener?.(handleMotionChange)
+      }
+    }
+
+    restore()
+  }
 }
 
 // ─── stagger ─────────────────────────────────────────────────────────────────

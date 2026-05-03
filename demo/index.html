@@ -248,6 +248,59 @@
       .zoom-stage { grid-template-columns: 1fr; }
     }
 
+    /* ── Parallax demo ── */
+    .parallax-scene {
+      position: relative;
+      min-height: 520px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 30px;
+      background:
+        linear-gradient(180deg, rgba(0,255,209,0.08), transparent 45%),
+        radial-gradient(circle at 18% 22%, rgba(255,0,200,0.2), transparent 25%),
+        var(--bg-alt);
+    }
+    .parallax-layer {
+      position: absolute;
+      border-radius: 999px;
+      pointer-events: none;
+      will-change: transform;
+    }
+    .parallax-layer--one {
+      width: 220px;
+      height: 220px;
+      left: 10%;
+      top: 16%;
+      background: linear-gradient(135deg, var(--cyan), transparent);
+      opacity: 0.32;
+      filter: blur(2px);
+    }
+    .parallax-layer--two {
+      width: 320px;
+      height: 320px;
+      right: -70px;
+      bottom: 4%;
+      background: linear-gradient(135deg, var(--magenta), var(--gold));
+      opacity: 0.18;
+      filter: blur(8px);
+    }
+    .parallax-content {
+      position: relative;
+      z-index: 1;
+      max-width: 560px;
+      padding: clamp(34px, 8vw, 72px);
+      margin-top: 120px;
+    }
+    .parallax-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.7rem, 8vw, 5rem);
+      font-weight: 900;
+      line-height: 0.94;
+      letter-spacing: -0.05em;
+      margin-bottom: 18px;
+    }
+    .parallax-copy { color: #aaaabe; line-height: 1.7; }
+
     /* ── Code snippet ── */
     .code-block {
       background: var(--bg-alt);
@@ -291,7 +344,7 @@
 <section class="hero" style="position:relative;">
   <p class="hero-eyebrow js-reveal">scroll-craft v0.1</p>
   <h1 class="js-reveal" style="--delay:80">Scroll<br/><em>animation</em><br/>that ships.</h1>
-  <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. IntersectionObserver-powered reveals, animated counters, scroll-progress fills, child staggers, zooms, and text reveals — all in TypeScript.</p>
+  <p class="js-reveal" style="--delay:160">Zero dependencies. ~4KB. IntersectionObserver-powered reveals, animated counters, scroll-progress fills, child staggers, parallax, zooms, and text reveals — all in TypeScript.</p>
   <div class="badge-row js-reveal" style="--delay:240">
     <span class="badge">0 dependencies</span>
     <span class="badge">~4KB minified</span>
@@ -561,11 +614,41 @@
 
 <div class="divider"></div>
 
+<!-- ── Parallax ─────────────────────────────────────────────────────────────── -->
+<section id="parallax">
+  <p class="label js-reveal">Effect 08</p>
+  <h2 class="js-reveal" style="--delay:60">Parallax</h2>
+  <p class="desc js-reveal" style="--delay:120">Move decorative layers based on scroll position with batched transform updates.</p>
+
+  <div class="parallax-scene">
+    <div class="parallax-layer parallax-layer--one js-parallax"></div>
+    <div class="parallax-layer parallax-layer--two js-parallax-x"></div>
+    <div class="parallax-content">
+      <h3 class="parallax-title">Depth without layout churn.</h3>
+      <p class="parallax-copy">Parallax caches geometry, updates visible elements in requestAnimationFrame, and disables movement for reduced-motion users.</p>
+    </div>
+  </div>
+
+  <div class="code-block js-reveal" style="--delay:80">
+<span class="kw">import</span> { <span class="fn">parallax</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">parallax</span>(<span class="str">'.hero-orb'</span>, {
+  speed:  0.25,
+  axis:   <span class="str">'y'</span>,
+  clamp:  120,
+})
+
+<span class="fn">parallax</span>(<span class="str">'.side-orb'</span>, { axis: <span class="str">'x'</span>, reverse: true })
+  </div>
+</section>
+
+<div class="divider"></div>
+
 <!-- ── Class API ─────────────────────────────────────────────────────────────── -->
 <section id="api">
   <p class="label js-reveal">API</p>
   <h2 class="js-reveal" style="--delay:60">Chainable class</h2>
-  <p class="desc js-reveal" style="--delay:120">All seven effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
+  <p class="desc js-reveal" style="--delay:120">All eight effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
 
   <div class="code-block js-reveal" style="--delay:80">
 <span class="kw">import</span> { <span class="fn">ScrollCraft</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
@@ -575,6 +658,7 @@
 sc.<span class="fn">reveal</span>(<span class="str">'.hero-text'</span>, { delay: 100, direction: <span class="str">'up'</span> })
   .<span class="fn">blurReveal</span>(<span class="str">'.panel'</span>, { blur: <span class="str">'12px'</span> })
   .<span class="fn">counter</span>(<span class="str">'[data-count]'</span>, { duration: 1200 })
+  .<span class="fn">parallax</span>(<span class="str">'.hero-orb'</span>, { speed: 0.2 })
   .<span class="fn">progress</span>(<span class="str">'#timeline .step'</span>)
   .<span class="fn">stagger</span>(<span class="str">'.feature-grid'</span>, { children: <span class="str">'.card'</span> })
   .<span class="fn">textReveal</span>(<span class="str">'.headline'</span>, { type: <span class="str">'words'</span> })
@@ -851,6 +935,69 @@ sc.<span class="fn">destroy</span>()
     els.forEach(el => obs.observe(el))
   }
 
+  // ── Parallax ──
+  function animateParallax(selector, { speed = 0.25, axis = 'y', reverse = false, clamp = 120, rootMargin = '0px' } = {}) {
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
+    const states = [...document.querySelectorAll(selector)].map(el => ({
+      el,
+      transform: el.style.transform,
+      top: 0,
+      left: 0,
+      width: 0,
+      height: 0,
+      visible: !('IntersectionObserver' in window),
+    }))
+    let raf = null
+    function measure() {
+      const sx = window.scrollX || window.pageXOffset
+      const sy = window.scrollY || window.pageYOffset
+      states.forEach(state => {
+        const rect = state.el.getBoundingClientRect()
+        state.top = rect.top + sy
+        state.left = rect.left + sx
+        state.width = rect.width
+        state.height = rect.height
+      })
+    }
+    function write() {
+      raf = null
+      if (reduceMotion && reduceMotion.matches) {
+        states.forEach(state => { state.el.style.transform = state.transform })
+        return
+      }
+      const sx = window.scrollX || window.pageXOffset
+      const sy = window.scrollY || window.pageYOffset
+      const cx = sx + window.innerWidth / 2
+      const cy = sy + window.innerHeight / 2
+      const dir = reverse ? -1 : 1
+      states.forEach(state => {
+        if (!state.visible) return
+        const center = axis === 'y' ? state.top + state.height / 2 : state.left + state.width / 2
+        const viewport = axis === 'y' ? cy : cx
+        const offset = Math.max(-clamp, Math.min(clamp, (viewport - center) * speed * dir))
+        state.el.style.transform = axis === 'y'
+          ? `translate3d(0, ${offset}px, 0)`
+          : `translate3d(${offset}px, 0, 0)`
+      })
+    }
+    function schedule() {
+      if (raf !== null) return
+      raf = requestAnimationFrame(write)
+    }
+    measure()
+    schedule()
+    const obs = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        const state = states.find(item => item.el === entry.target)
+        if (state) state.visible = entry.isIntersecting
+      })
+      schedule()
+    }, { rootMargin }) : null
+    states.forEach(state => obs && obs.observe(state.el))
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', () => { measure(); schedule() })
+  }
+
   // ── Init ──
   revealEls(document.querySelectorAll('.js-reveal'))
   revealEls(document.querySelectorAll('.js-reveal--left'),  { direction: 'left',  distance: '40px', easeFn: ease.elasticOut })
@@ -863,6 +1010,8 @@ sc.<span class="fn">destroy</span>()
   animateStagger('.js-stagger', { children: '.stagger-tile' })
   animateBlurReveal('.js-blur-reveal')
   animateZoom('.js-zoom')
+  animateParallax('.js-parallax')
+  animateParallax('.js-parallax-x', { axis: 'x', reverse: true, speed: 0.18, clamp: 90 })
 </script>
 
 </body>

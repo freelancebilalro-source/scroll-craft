@@ -2,6 +2,7 @@ import {
   blurReveal as _blurReveal,
   reveal as _reveal,
   counter as _counter,
+  parallax as _parallax,
   progress as _progress,
   stagger as _stagger,
   textReveal as _textReveal,
@@ -9,16 +10,17 @@ import {
   type BlurRevealOptions,
   type RevealOptions,
   type CounterOptions,
+  type ParallaxOptions,
   type ProgressOptions,
   type StaggerOptions,
   type TextRevealOptions,
   type ZoomOptions,
 } from './effects'
 
-export type { BlurRevealOptions, RevealOptions, CounterOptions, ProgressOptions, StaggerOptions, TextRevealOptions, ZoomOptions, Direction } from './effects'
+export type { BlurRevealOptions, RevealOptions, CounterOptions, ParallaxOptions, ProgressOptions, StaggerOptions, TextRevealOptions, ZoomOptions, Direction } from './effects'
 export type { EaseName, EaseFn } from './easing'
 export { easings, resolveEase } from './easing'
-export { blurReveal, reveal, counter, progress, stagger, textReveal, zoom } from './effects'
+export { blurReveal, reveal, counter, parallax, progress, stagger, textReveal, zoom } from './effects'
 
 // ─── Class API ────────────────────────────────────────────────────────────────
 
@@ -32,6 +34,7 @@ type Target = string | Element | NodeList | Element[]
  * sc.reveal('.hero-text', { delay: 100 })
  *   .blurReveal('.panel')
  *   .counter('[data-count]', { duration: 1200 })
+ *   .parallax('.hero-orb')
  *   .progress('#timeline .step')
  *   .stagger('.feature-grid')
  *   .textReveal('.headline')
@@ -52,6 +55,11 @@ export class ScrollCraft {
 
   counter(target: Target, options?: CounterOptions): this {
     this.cleanups.push(_counter(target, options))
+    return this
+  }
+
+  parallax(target: Target, options?: ParallaxOptions): this {
+    this.cleanups.push(_parallax(target, options))
     return this
   }
 
