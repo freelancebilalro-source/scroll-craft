@@ -54,6 +54,7 @@ import { ScrollCraft } from 'scroll-craft'
 const sc = new ScrollCraft()
 
 sc.reveal('.card')
+  .blurReveal('.panel')
   .counter('[data-count]', { duration: 1400 })
   .progress('#timeline .step')
   .stagger('.feature-grid', { children: '.card' })
@@ -79,6 +80,25 @@ reveal('.card', {
   delay:     0,
   threshold: 0.12,
   once:      true,
+})
+```
+
+### Blur Reveal
+
+Reveal elements by fading them in while reducing blur and vertical movement.
+
+```ts
+import { blurReveal } from 'scroll-craft'
+
+blurReveal('.panel', {
+  blur: '12px',
+  distance: '16px',
+  duration: 700,
+  ease: 'cubicOut',
+  threshold: 0.12,
+  rootMargin: '0px 0px -10% 0px',
+  once: true,
+  inClass: 'sc-in',
 })
 ```
 
@@ -195,6 +215,7 @@ import { ScrollCraft } from 'scroll-craft'
 const sc = new ScrollCraft()
 
 sc.reveal('.hero-text', { delay: 100, direction: 'up' })
+  .blurReveal('.panel', { blur: '12px' })
   .counter('[data-count]', { duration: 1200 })
   .progress('#timeline .step')
   .stagger('.feature-grid', { children: '.card' })
@@ -217,6 +238,19 @@ sc.destroy()
 | `duration` | `number` | `600` | Animation duration (ms) |
 | `ease` | `EaseName \| EaseFn` | `'cubicOut'` | Easing function |
 | `delay` | `number` | `0` | Delay before animating (ms) |
+| `threshold` | `number` | `0.12` | Visible fraction before trigger |
+| `rootMargin` | `string` | `'0px 0px -10% 0px'` | Observer root margin |
+| `once` | `boolean` | `true` | Unobserve after first reveal |
+| `inClass` | `string` | `'sc-in'` | Class added when in view |
+
+### `blurReveal(target, options?)`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `blur` | `string` | `'12px'` | Initial blur amount |
+| `distance` | `string` | `'16px'` | Initial vertical travel distance |
+| `duration` | `number` | `700` | Animation duration (ms) |
+| `ease` | `EaseName \| EaseFn` | `'cubicOut'` | Easing function |
 | `threshold` | `number` | `0.12` | Visible fraction before trigger |
 | `rootMargin` | `string` | `'0px 0px -10% 0px'` | Observer root margin |
 | `once` | `boolean` | `true` | Unobserve after first reveal |
@@ -294,7 +328,7 @@ You can also pass a custom function: `ease: (t) => t * t`
 scroll-craft/
 ├── src/
 │   ├── index.ts      — ScrollCraft class + re-exports
-│   ├── effects.ts    — reveal, counter, progress, stagger, textReveal
+│   ├── effects.ts    — blurReveal, reveal, counter, progress, stagger, textReveal
 │   └── easing.ts     — easing functions
 ├── dist/             — built output (ESM + CJS + .d.ts)
 ├── demo/

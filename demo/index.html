@@ -162,6 +162,49 @@
     }
     .stagger-copy { color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
 
+    /* ── Blur reveal demo ── */
+    .blur-panel {
+      position: relative;
+      padding: clamp(32px, 7vw, 64px);
+      min-height: 360px;
+      display: grid;
+      align-content: end;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 78% 20%, rgba(255,209,102,0.22), transparent 28%),
+        radial-gradient(circle at 18% 20%, rgba(0,255,209,0.18), transparent 30%),
+        linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 28px;
+    }
+    .blur-orb {
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      right: -40px;
+      top: -50px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--cyan), var(--magenta));
+      filter: blur(20px);
+      opacity: 0.24;
+    }
+    .blur-title {
+      position: relative;
+      max-width: 660px;
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.4rem, 8vw, 5.3rem);
+      font-weight: 900;
+      line-height: 0.94;
+      letter-spacing: -0.05em;
+      margin-bottom: 18px;
+    }
+    .blur-copy {
+      position: relative;
+      max-width: 560px;
+      color: #aaaabe;
+      line-height: 1.7;
+    }
+
     /* ── Code snippet ── */
     .code-block {
       background: var(--bg-alt);
@@ -416,11 +459,37 @@
 
 <div class="divider"></div>
 
+<!-- ── Blur Reveal ──────────────────────────────────────────────────────────── -->
+<section id="blur-reveal">
+  <p class="label js-reveal">Effect 06</p>
+  <h2 class="js-reveal" style="--delay:60">Blur Reveal</h2>
+  <p class="desc js-reveal" style="--delay:120">Fade, de-blur, and lift elements into place when they enter the viewport.</p>
+
+  <div class="blur-panel js-blur-reveal">
+    <div class="blur-orb"></div>
+    <h3 class="blur-title">Soft focus on arrival.</h3>
+    <p class="blur-copy">Use blurReveal for hero panels, editorial blocks, or product shots that should resolve from atmosphere into clarity.</p>
+  </div>
+
+  <div class="code-block js-reveal" style="--delay:80">
+<span class="kw">import</span> { <span class="fn">blurReveal</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">blurReveal</span>(<span class="str">'.panel'</span>, {
+  blur:     <span class="str">'12px'</span>,
+  distance: <span class="str">'16px'</span>,
+  duration: 700,
+  ease:     <span class="str">'cubicOut'</span>,
+})
+  </div>
+</section>
+
+<div class="divider"></div>
+
 <!-- ── Class API ─────────────────────────────────────────────────────────────── -->
 <section id="api">
   <p class="label js-reveal">API</p>
   <h2 class="js-reveal" style="--delay:60">Chainable class</h2>
-  <p class="desc js-reveal" style="--delay:120">All five effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
+  <p class="desc js-reveal" style="--delay:120">All six effects are also available on a single ScrollCraft instance. Call .destroy() to clean up.</p>
 
   <div class="code-block js-reveal" style="--delay:80">
 <span class="kw">import</span> { <span class="fn">ScrollCraft</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
@@ -428,6 +497,7 @@
 <span class="kw">const</span> sc = <span class="kw">new</span> <span class="fn">ScrollCraft</span>()
 
 sc.<span class="fn">reveal</span>(<span class="str">'.hero-text'</span>, { delay: 100, direction: <span class="str">'up'</span> })
+  .<span class="fn">blurReveal</span>(<span class="str">'.panel'</span>, { blur: <span class="str">'12px'</span> })
   .<span class="fn">counter</span>(<span class="str">'[data-count]'</span>, { duration: 1200 })
   .<span class="fn">progress</span>(<span class="str">'#timeline .step'</span>)
   .<span class="fn">stagger</span>(<span class="str">'.feature-grid'</span>, { children: <span class="str">'.card'</span> })
@@ -639,6 +709,41 @@ sc.<span class="fn">destroy</span>()
     states.forEach(state => obs.observe(state.parent))
   }
 
+  // ── Blur Reveal ──
+  function animateBlurReveal(selector, { blur = '12px', distance = '16px', duration = 700 } = {}) {
+    const blurValue = parseFloat(blur)
+    const blurUnit = blur.replace(/[\d.-]/g, '') || 'px'
+    const dist = parseFloat(distance)
+    const unit = distance.replace(/[\d.-]/g, '') || 'px'
+    const els = [...document.querySelectorAll(selector)]
+    els.forEach(el => {
+      el.style.opacity = '0'
+      el.style.filter = `blur(${blur})`
+      el.style.transform = `translateY(${distance})`
+      el.style.willChange = 'opacity, filter, transform'
+    })
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return
+        const el = entry.target
+        const start = performance.now()
+        function step(now) {
+          const p = Math.min(1, (now - start) / duration)
+          const e = ease.cubicOut(p)
+          el.style.opacity = e
+          el.style.filter = `blur(${blurValue * (1 - e)}${blurUnit})`
+          el.style.transform = `translateY(${dist * (1 - e)}${unit})`
+          if (p < 1) requestAnimationFrame(step)
+          else { el.style.opacity = '1'; el.style.filter = 'blur(0)'; el.style.transform = 'translateY(0)'; el.style.willChange = 'auto' }
+        }
+        requestAnimationFrame(step)
+        el.classList.add('sc-in')
+        obs.unobserve(el)
+      })
+    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' })
+    els.forEach(el => obs.observe(el))
+  }
+
   // ── Init ──
   revealEls(document.querySelectorAll('.js-reveal'))
   revealEls(document.querySelectorAll('.js-reveal--left'),  { direction: 'left',  distance: '40px', easeFn: ease.elasticOut })
@@ -649,6 +754,7 @@ sc.<span class="fn">destroy</span>()
   animateTextReveal('.js-text-reveal')
   animateTextReveal('.js-text-reveal-letters', { type: 'letters', stagger: 18 })
   animateStagger('.js-stagger', { children: '.stagger-tile' })
+  animateBlurReveal('.js-blur-reveal')
 </script>
 
 </body>

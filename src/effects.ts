@@ -98,6 +98,25 @@ export interface StaggerOptions {
   inClass?: string
 }
 
+export interface BlurRevealOptions {
+  /** Initial blur amount before reveal. Default: '12px' */
+  blur?: string
+  /** Initial vertical travel distance. Default: '16px' */
+  distance?: string
+  /** Animation duration in ms. Default: 700 */
+  duration?: number
+  /** Easing function name or custom fn. Default: 'cubicOut' */
+  ease?: EaseName | EaseFn
+  /** Fraction of element visible before triggering. Default: 0.12 */
+  threshold?: number
+  /** Viewport margin to shrink trigger zone (CSS shorthand). Default: '0px 0px -10% 0px' */
+  rootMargin?: string
+  /** Whether to unobserve after first reveal. Default: true */
+  once?: boolean
+  /** CSS class added when in view. Default: 'sc-in' */
+  inClass?: string
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveElements(target: string | Element | NodeList | Element[]): Element[] {
@@ -149,6 +168,17 @@ type StaggerElementState = {
   parent: HTMLElement
   children: StaggerChildState[]
   parentHadInClass: boolean
+  running: boolean
+  token: number
+}
+
+type BlurRevealElementState = {
+  element: HTMLElement
+  opacity: string
+  filter: string
+  transform: string
+  willChange: string
+  hadInClass: boolean
   running: boolean
   token: number
 }
@@ -666,6 +696,165 @@ export function stagger(
       state.token += 1
       if (!state.parentHadInClass) state.parent.classList.remove(inClass)
       restoreChildren(state)
+    })
+  }
+}
+
+// ─── blurReveal ──────────────────────────────────────────────────────────────
+
+/**
+ * Reveals elements by animating opacity, blur, and vertical movement.
+ * Returns a cleanup function that disconnects the observer and restores inline styles.
+ *
+ * @example
+ * const stop = blurReveal('.panel', { blur: '16px', distance: '20px' })
+ */
+export function blurReveal(
+  target: string | Element | NodeList | Element[],
+  options: BlurRevealOptions = {},
+): () => void {
+  const {
+    blur = '12px',
+    distance = '16px',
+    duration = 700,
+    ease = 'cubicOut',
+    threshold = 0.12,
+    rootMargin = '0px 0px -10% 0px',
+    once = true,
+    inClass = 'sc-in',
+  } = options
+
+  const easeFn = resolveEase(ease)
+  const elements = resolveElements(target) as HTMLElement[]
+  if (!elements.length) return () => {}
+
+  const states = elements.map<BlurRevealElementState>((element) => {
+    const state = {
+      element,
+      opacity: element.style.opacity,
+      filter: element.style.filter,
+      transform: element.style.transform,
+      willChange: element.style.willChange,
+      hadInClass: element.classList.contains(inClass),
+      running: false,
+      token: 0,
+    }
+
+    element.style.opacity = '0'
+    element.style.filter = `blur(${blur})`
+    element.style.transform = `translateY(${distance})`
+    element.style.willChange = 'opacity, filter, transform'
+
+    return state
+  })
+  const rafIds = new Set<number>()
+
+  function resetState(state: BlurRevealElementState): void {
+    state.element.style.opacity = '0'
+    state.element.style.filter = `blur(${blur})`
+    state.element.style.transform = `translateY(${distance})`
+    state.element.style.willChange = 'opacity, filter, transform'
+  }
+
+  function finishState(state: BlurRevealElementState): void {
+    state.element.style.opacity = '1'
+    state.element.style.filter = 'blur(0)'
+    state.element.style.transform = 'translateY(0)'
+    state.element.style.willChange = 'auto'
+  }
+
+  function restoreState(state: BlurRevealElementState): void {
+    state.element.style.opacity = state.opacity
+    state.element.style.filter = state.filter
+    state.element.style.transform = state.transform
+    state.element.style.willChange = state.willChange
+  }
+
+  if (!('IntersectionObserver' in window)) {
+    states.forEach((state) => {
+      finishState(state)
+      state.element.classList.add(inClass)
+    })
+    return () => {
+      states.forEach((state) => {
+        if (!state.hadInClass) state.element.classList.remove(inClass)
+        restoreState(state)
+      })
+    }
+  }
+
+  const stateByElement = new Map<Element, BlurRevealElementState>(
+    states.map((state) => [state.element, state]),
+  )
+  const blurValue = parseFloat(blur)
+  const blurUnit = blur.replace(/[\d.-]/g, '') || 'px'
+  const distanceValue = parseFloat(distance)
+  const distanceUnit = distance.replace(/[\d.-]/g, '') || 'px'
+
+  function animateState(state: BlurRevealElementState): void {
+    if (state.running) return
+    state.running = true
+    state.token += 1
+    const token = state.token
+    const start = performance.now()
+
+    function step(now: number) {
+      if (token !== state.token) return
+
+      const progress = Math.min(1, (now - start) / duration)
+      const eased = easeFn(progress)
+      state.element.style.opacity = String(eased)
+      state.element.style.filter = `blur(${blurValue * (1 - eased)}${blurUnit})`
+      state.element.style.transform = `translateY(${distanceValue * (1 - eased)}${distanceUnit})`
+
+      if (progress < 1) {
+        const rafId = requestAnimationFrame(step)
+        rafIds.add(rafId)
+      } else {
+        finishState(state)
+        state.running = false
+      }
+    }
+
+    const rafId = requestAnimationFrame(step)
+    rafIds.add(rafId)
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const state = stateByElement.get(entry.target)
+        if (!state) return
+
+        if (!entry.isIntersecting) {
+          if (!once) {
+            state.running = false
+            state.token += 1
+            if (!state.hadInClass) state.element.classList.remove(inClass)
+            resetState(state)
+          }
+          return
+        }
+
+        state.element.classList.add(inClass)
+        animateState(state)
+        if (once) observer.unobserve(entry.target)
+      })
+    },
+    { threshold, rootMargin },
+  )
+
+  states.forEach((state) => observer.observe(state.element))
+
+  return () => {
+    observer.disconnect()
+    rafIds.forEach((rafId) => cancelAnimationFrame(rafId))
+    rafIds.clear()
+    states.forEach((state) => {
+      state.running = false
+      state.token += 1
+      if (!state.hadInClass) state.element.classList.remove(inClass)
+      restoreState(state)
     })
   }
 }
