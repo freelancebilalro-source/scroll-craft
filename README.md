@@ -333,6 +333,76 @@ zoom('.product-card', {
 })
 ```
 
+### Liquid Swipe
+
+> **Implementation:** CSS/SVG `clipPath` with a quadratic-bezier elastic edge — no WebGL or shaders.
+
+Drag a handle to reveal hidden content behind a curved, elastic edge. Supports snap-to-complete, keyboard control, and `prefers-reduced-motion`.
+
+```ts
+import { liquidSwipe } from 'scroll-craft'
+
+const stop = liquidSwipe('#liquid-demo', {
+  direction:  'up',
+  threshold:  0.65,
+  tension:    0.35,
+  snap:       true,
+  onComplete: () => console.log('revealed!'),
+  onReset:    () => console.log('reset'),
+})
+
+// Clean up
+stop()
+```
+
+**Required HTML structure:**
+
+```html
+<div class="sc-liquid" id="liquid-demo">
+  <!-- Base layer (always visible underneath) -->
+  <div class="sc-liquid-base">
+    <img src="before.jpg" alt="Before" />
+  </div>
+
+  <!-- Reveal layer (clipped by the liquid mask) -->
+  <div class="sc-liquid-reveal">
+    <img src="after.jpg" alt="After" />
+  </div>
+
+  <!-- Drag handle -->
+  <button class="sc-liquid-handle" type="button" aria-label="Swipe to reveal">
+    Swipe up
+  </button>
+</div>
+```
+
+**Minimum CSS:**
+
+```css
+.sc-liquid          { position: relative; overflow: hidden; }
+.sc-liquid-base,
+.sc-liquid-reveal   { position: absolute; inset: 0; }
+.sc-liquid-handle   { position: absolute; top: 0; touch-action: none; }
+/* centre horizontally without conflicting with JS transform */
+.sc-liquid-handle   { left: 50%; margin-left: -70px; width: 140px; }
+```
+
+The effect sets two CSS custom properties on the root element you can use for styling:
+
+| Property | Value |
+|---|---|
+| `--sc-liquid-progress` | Current progress `0`–`1` |
+| `--sc-liquid-edge` | Edge position from top in `px` |
+
+**Keyboard support** (when focus is on the handle):
+
+| Key | Action |
+|---|---|
+| `ArrowUp` / `ArrowDown` | Adjust progress ±0.1 |
+| `Home` | Reset to 0 |
+| `End` | Complete to 1 |
+| `Enter` / `Space` | Toggle between 0 and 1 |
+
 ---
 
 ## Chainable API
@@ -357,6 +427,7 @@ sc.reveal('.hero-text', { delay: 100, direction: 'up' })
   .stagger('.feature-grid', { children: '.card' })
   .textReveal('.headline', { type: 'words' })
   .zoom('.product-card', { from: 0.94 })
+  .liquidSwipe('#liquid-demo', { direction: 'up', threshold: 0.65 })
 
 // Clean up
 sc.destroy()
@@ -491,6 +562,23 @@ Each step accepts:
 | `once` | `boolean` | `true` | Unobserve after first reveal |
 | `inClass` | `string` | `'sc-in'` | Class added when in view |
 
+### `liquidSwipe(target, options?)`
+
+> CSS/SVG `clipPath` implementation — no WebGL.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `direction` | `'up' \| 'down'` | `'up'` | Drag direction that increases progress |
+| `handle` | `string` | `'.sc-liquid-handle'` | Selector for the drag handle |
+| `reveal` | `string` | `'.sc-liquid-reveal'` | Selector for the element to reveal |
+| `threshold` | `number` | `0.65` | Progress at which released drag snaps to 1 |
+| `tension` | `number` | `0.35` | Controls curve depth of the elastic edge |
+| `snap` | `boolean` | `true` | Snap to 0 or 1 on pointer release |
+| `disabled` | `boolean` | `false` | Disable all interaction |
+| `onProgress` | `(p: number) => void` | — | Called on every progress update |
+| `onComplete` | `() => void` | — | Called once when progress reaches 1 |
+| `onReset` | `() => void` | — | Called once when progress returns to 0 |
+
 ---
 
 ## Easing Functions
@@ -517,7 +605,7 @@ You can also pass a custom function: `ease: (t) => t * t`
 scroll-craft/
 ├── src/
 │   ├── index.ts      — ScrollCraft class + re-exports
-│   ├── effects.ts    — blurReveal, reveal, counter, parallax, progress, scene, scrollProgress, stagger, textReveal, zoom
+│   ├── effects.ts    — blurReveal, reveal, counter, parallax, progress, scene, scrollProgress, stagger, textReveal, zoom, liquidSwipe
 │   └── easing.ts     — easing functions
 ├── dist/             — built output (ESM + CJS + .d.ts)
 ├── demo/

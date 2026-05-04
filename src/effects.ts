@@ -1658,6 +1658,408 @@ export function zoom(
   }
 }
 
+// ─── liquidSwipe ─────────────────────────────────────────────────────────────
+
+export type LiquidSwipeDirection = 'up' | 'down'
+
+export interface LiquidSwipeOptions {
+  /** Drag direction that increases reveal progress. Default: 'up' */
+  direction?: LiquidSwipeDirection
+  /** Selector for the drag handle element. Default: '.sc-liquid-handle' */
+  handle?: string
+  /** Selector for the element to reveal. Default: '.sc-liquid-reveal' */
+  reveal?: string
+  /** Progress threshold (0–1) at which a released drag snaps to 1. Default: 0.65 */
+  threshold?: number
+  /** Controls the curve depth of the elastic edge. Default: 0.35 */
+  tension?: number
+  /** Snap to 0 or 1 on release. Default: true */
+  snap?: boolean
+  /** Disable all interaction. Default: false */
+  disabled?: boolean
+  /** Called on every progress update. */
+  onProgress?: (progress: number) => void
+  /** Called once when progress snaps/reaches 1. */
+  onComplete?: () => void
+  /** Called once when progress snaps/resets to 0 after being completed. */
+  onReset?: () => void
+}
+
+type LiquidSwipeState = {
+  root: HTMLElement
+  revealEl: HTMLElement | null
+  handleEl: HTMLElement | null
+  svgEl: SVGSVGElement
+  pathEl: SVGPathElement
+  clipId: string
+  progress: number
+  curveStretch: number
+  dragging: boolean
+  dragStartY: number
+  dragStartProgress: number
+  rect: DOMRect
+  rafId: number | null
+  snapRafId: number | null
+  animating: boolean
+  completed: boolean
+  addedPosition: boolean
+  origRevealClip: string
+  origRevealWillChange: string
+  origHandleTransform: string
+  addedAriaAttrs: boolean
+}
+
+let _lsIdCounter = 0
+
+/**
+ * Interactive liquid-swipe reveal driven by pointer drag.
+ * Uses an inline SVG clipPath with a quadratic-bezier elastic edge.
+ * Returns a cleanup function that removes all listeners and restores styles.
+ *
+ * @example
+ * const stop = liquidSwipe('.sc-liquid', {
+ *   direction: 'up',
+ *   threshold: 0.65,
+ *   tension: 0.35,
+ * })
+ */
+export function liquidSwipe(
+  target: string | Element | NodeList | Element[],
+  options: LiquidSwipeOptions = {},
+): () => void {
+  const {
+    direction = 'up',
+    handle: handleSel = '.sc-liquid-handle',
+    reveal: revealSel = '.sc-liquid-reveal',
+    threshold = 0.65,
+    tension = 0.35,
+    snap = true,
+    disabled = false,
+    onProgress,
+    onComplete,
+    onReset,
+  } = options
+
+  if (disabled) return () => {}
+
+  const roots = resolveElements(target) as HTMLElement[]
+  if (!roots.length) return () => {}
+
+  const reduceMotion = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null
+
+  const states: LiquidSwipeState[] = []
+  const eventCleanups: Array<() => void> = []
+
+  function lsEaseOut(t: number): number {
+    return 1 - (1 - t) ** 3
+  }
+
+  function buildClipPath(state: LiquidSwipeState): void {
+    const { width, height } = state.rect
+    if (!width || !height) return
+
+    const maxCurve = Math.min(tension * height * 0.4, height * 0.28)
+    const curve = maxCurve * state.curveStretch
+    const p = state.progress
+
+    let d: string
+    if (direction === 'up') {
+      // Reveal grows from bottom; top edge has elastic curve
+      const edgeY = height * (1 - p)
+      d = `M 0 ${edgeY} Q ${width / 2} ${edgeY - curve} ${width} ${edgeY} L ${width} ${height} L 0 ${height} Z`
+    } else {
+      // Reveal grows from top; bottom edge has elastic curve
+      const edgeY = height * p
+      d = `M 0 0 L ${width} 0 L ${width} ${edgeY} Q ${width / 2} ${edgeY + curve} 0 ${edgeY} Z`
+    }
+
+    state.pathEl.setAttribute('d', d)
+  }
+
+  function applyHandleTransform(state: LiquidSwipeState): void {
+    if (!state.handleEl) return
+    const { height } = state.rect
+    const edgeY = direction === 'up' ? height * (1 - state.progress) : height * state.progress
+    const handleH = state.handleEl.offsetHeight
+    state.handleEl.style.transform = `translate3d(0, ${edgeY - handleH * 0.5}px, 0)`
+    if (state.addedAriaAttrs) {
+      state.handleEl.setAttribute('aria-valuenow', String(Math.round(state.progress * 100)))
+    }
+  }
+
+  function applyCSSVars(state: LiquidSwipeState): void {
+    const { height } = state.rect
+    const edgeY = direction === 'up' ? height * (1 - state.progress) : height * state.progress
+    state.root.style.setProperty('--sc-liquid-progress', state.progress.toFixed(4))
+    state.root.style.setProperty('--sc-liquid-edge', `${edgeY.toFixed(2)}px`)
+  }
+
+  function render(state: LiquidSwipeState): void {
+    buildClipPath(state)
+    applyHandleTransform(state)
+    applyCSSVars(state)
+    onProgress?.(state.progress)
+  }
+
+  function notifyCompletion(state: LiquidSwipeState, toProgress: number): void {
+    if (toProgress === 1 && !state.completed) {
+      state.completed = true
+      onComplete?.()
+    } else if (toProgress === 0 && state.completed) {
+      state.completed = false
+      onReset?.()
+    }
+  }
+
+  function snapTo(state: LiquidSwipeState, toProgress: number, duration: number): void {
+    if (state.snapRafId !== null) {
+      cancelAnimationFrame(state.snapRafId)
+      state.snapRafId = null
+    }
+
+    if (reduceMotion?.matches) {
+      state.progress = toProgress
+      state.curveStretch = 0
+      state.animating = false
+      render(state)
+      notifyCompletion(state, toProgress)
+      return
+    }
+
+    const fromProgress = state.progress
+    const fromCurve = state.curveStretch
+    const start = performance.now()
+    state.animating = true
+
+    function step(now: number): void {
+      const t = Math.min(1, (now - start) / duration)
+      const e = lsEaseOut(t)
+      state.progress = fromProgress + (toProgress - fromProgress) * e
+      state.curveStretch = fromCurve * (1 - e)
+      render(state)
+
+      if (t < 1) {
+        state.snapRafId = requestAnimationFrame(step)
+      } else {
+        state.progress = toProgress
+        state.curveStretch = 0
+        state.animating = false
+        state.snapRafId = null
+        render(state)
+        notifyCompletion(state, toProgress)
+      }
+    }
+
+    state.snapRafId = requestAnimationFrame(step)
+  }
+
+  roots.forEach((root) => {
+    const revealEl = root.querySelector(revealSel) as HTMLElement | null
+    const handleEl = root.querySelector(handleSel) as HTMLElement | null
+    const clipId = `sc-lq-${++_lsIdCounter}`
+
+    // Inline SVG that hosts the clipPath definition
+    const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg') as SVGSVGElement
+    svgEl.setAttribute('aria-hidden', 'true')
+    svgEl.setAttribute('focusable', 'false')
+    svgEl.style.cssText = 'position:absolute;width:0;height:0;overflow:visible;pointer-events:none;top:0;left:0'
+
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
+    const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath')
+    clipPath.setAttribute('id', clipId)
+    // userSpaceOnUse → coordinates match the clipped element's own coordinate space
+    clipPath.setAttribute('clipPathUnits', 'userSpaceOnUse')
+    const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path') as SVGPathElement
+    clipPath.appendChild(pathEl)
+    defs.appendChild(clipPath)
+    svgEl.appendChild(defs)
+
+    // Root must be positioned so absolute children work correctly
+    const computedPos = getComputedStyle(root).position
+    const addedPosition = computedPos === 'static'
+    if (addedPosition) root.style.position = 'relative'
+
+    root.appendChild(svgEl)
+
+    const origRevealClip = revealEl?.style.clipPath ?? ''
+    const origRevealWillChange = revealEl?.style.willChange ?? ''
+    const origHandleTransform = handleEl?.style.transform ?? ''
+
+    if (revealEl) {
+      revealEl.style.clipPath = `url(#${clipId})`
+      revealEl.style.willChange = 'clip-path'
+    }
+
+    // Accessibility: make handle a slider so screen readers report progress
+    let addedAriaAttrs = false
+    if (handleEl && !handleEl.hasAttribute('aria-valuenow')) {
+      addedAriaAttrs = true
+      handleEl.setAttribute('role', handleEl.getAttribute('role') ?? 'slider')
+      handleEl.setAttribute('aria-valuenow', '0')
+      handleEl.setAttribute('aria-valuemin', '0')
+      handleEl.setAttribute('aria-valuemax', '100')
+    }
+
+    const state: LiquidSwipeState = {
+      root,
+      revealEl,
+      handleEl,
+      svgEl,
+      pathEl,
+      clipId,
+      progress: 0,
+      curveStretch: 0,
+      dragging: false,
+      dragStartY: 0,
+      dragStartProgress: 0,
+      rect: root.getBoundingClientRect(),
+      rafId: null,
+      snapRafId: null,
+      animating: false,
+      completed: false,
+      addedPosition,
+      origRevealClip,
+      origRevealWillChange,
+      origHandleTransform,
+      addedAriaAttrs,
+    }
+    states.push(state)
+
+    if (handleEl) {
+      function onPointerDown(e: PointerEvent): void {
+        // Allow interrupting an in-flight snap
+        if (state.animating) {
+          if (state.snapRafId !== null) {
+            cancelAnimationFrame(state.snapRafId)
+            state.snapRafId = null
+            state.animating = false
+          } else {
+            return
+          }
+        }
+        state.dragging = true
+        state.dragStartY = e.clientY
+        state.dragStartProgress = state.progress
+        state.rect = state.root.getBoundingClientRect()
+        ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+        e.preventDefault()
+      }
+
+      function onPointerMove(e: PointerEvent): void {
+        if (!state.dragging) return
+        const deltaY = e.clientY - state.dragStartY
+        const { height } = state.rect
+        if (!height) return
+        const deltaProgress = direction === 'up' ? -deltaY / height : deltaY / height
+        state.progress = Math.max(0, Math.min(1, state.dragStartProgress + deltaProgress))
+        // Stretch curve proportionally to drag distance
+        state.curveStretch = Math.min(1, Math.abs(deltaY) / (height * 0.25))
+        if (state.rafId !== null) return
+        state.rafId = requestAnimationFrame(() => {
+          state.rafId = null
+          render(state)
+        })
+      }
+
+      function onPointerUp(_e: PointerEvent): void {
+        if (!state.dragging) return
+        state.dragging = false
+        if (snap) {
+          snapTo(state, state.progress >= threshold ? 1 : 0, 450)
+        } else {
+          state.curveStretch = 0
+          render(state)
+        }
+      }
+
+      function onKeyDown(e: KeyboardEvent): void {
+        const step = 0.1
+        let next = state.progress
+        if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          next = direction === 'up' ? Math.min(1, next + step) : Math.max(0, next - step)
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          next = direction === 'up' ? Math.max(0, next - step) : Math.min(1, next + step)
+        } else if (e.key === 'Home') {
+          e.preventDefault()
+          next = 0
+        } else if (e.key === 'End') {
+          e.preventDefault()
+          next = 1
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          next = next > 0.5 ? 0 : 1
+        } else {
+          return
+        }
+        if (next !== state.progress) snapTo(state, next, 300)
+      }
+
+      handleEl.addEventListener('pointerdown', onPointerDown)
+      handleEl.addEventListener('pointermove', onPointerMove)
+      handleEl.addEventListener('pointerup', onPointerUp)
+      handleEl.addEventListener('pointercancel', onPointerUp)
+      handleEl.addEventListener('keydown', onKeyDown)
+
+      eventCleanups.push(() => {
+        handleEl.removeEventListener('pointerdown', onPointerDown)
+        handleEl.removeEventListener('pointermove', onPointerMove)
+        handleEl.removeEventListener('pointerup', onPointerUp)
+        handleEl.removeEventListener('pointercancel', onPointerUp)
+        handleEl.removeEventListener('keydown', onKeyDown)
+      })
+    }
+
+    // Initial render (nothing revealed at start)
+    render(state)
+  })
+
+  function onResize(): void {
+    states.forEach((state) => {
+      if (!state.dragging) {
+        state.rect = state.root.getBoundingClientRect()
+        render(state)
+      }
+    })
+  }
+
+  window.addEventListener('resize', onResize)
+
+  return () => {
+    window.removeEventListener('resize', onResize)
+    eventCleanups.forEach((fn) => fn())
+
+    states.forEach((state) => {
+      if (state.rafId !== null) cancelAnimationFrame(state.rafId)
+      if (state.snapRafId !== null) cancelAnimationFrame(state.snapRafId)
+
+      state.svgEl.parentNode?.removeChild(state.svgEl)
+
+      if (state.revealEl) {
+        state.revealEl.style.clipPath = state.origRevealClip
+        state.revealEl.style.willChange = state.origRevealWillChange
+      }
+
+      if (state.handleEl) {
+        state.handleEl.style.transform = state.origHandleTransform
+        if (state.addedAriaAttrs) {
+          state.handleEl.removeAttribute('aria-valuenow')
+          state.handleEl.removeAttribute('aria-valuemin')
+          state.handleEl.removeAttribute('aria-valuemax')
+        }
+      }
+
+      if (state.addedPosition) state.root.style.position = ''
+
+      state.root.style.removeProperty('--sc-liquid-progress')
+      state.root.style.removeProperty('--sc-liquid-edge')
+    })
+  }
+}
+
 // ─── textReveal ──────────────────────────────────────────────────────────────
 
 /**

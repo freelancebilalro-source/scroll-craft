@@ -9,6 +9,7 @@ import {
   stagger as _stagger,
   textReveal as _textReveal,
   zoom as _zoom,
+  liquidSwipe as _liquidSwipe,
   type BlurRevealOptions,
   type RevealOptions,
   type CounterOptions,
@@ -21,12 +22,14 @@ import {
   type StaggerOptions,
   type TextRevealOptions,
   type ZoomOptions,
+  type LiquidSwipeOptions,
+  type LiquidSwipeDirection,
 } from './effects'
 
-export type { BlurRevealOptions, RevealOptions, CounterOptions, ParallaxOptions, ProgressOptions, SceneOptions, SceneStep, SceneValues, ScrollProgressOptions, StaggerOptions, TextRevealOptions, ZoomOptions, Direction } from './effects'
+export type { BlurRevealOptions, RevealOptions, CounterOptions, ParallaxOptions, ProgressOptions, SceneOptions, SceneStep, SceneValues, ScrollProgressOptions, StaggerOptions, TextRevealOptions, ZoomOptions, Direction, LiquidSwipeOptions, LiquidSwipeDirection } from './effects'
 export type { EaseName, EaseFn } from './easing'
 export { easings, resolveEase } from './easing'
-export { blurReveal, reveal, counter, parallax, progress, scene, scrollProgress, stagger, textReveal, zoom } from './effects'
+export { blurReveal, reveal, counter, parallax, progress, scene, scrollProgress, stagger, textReveal, zoom, liquidSwipe } from './effects'
 
 // ─── Class API ────────────────────────────────────────────────────────────────
 
@@ -98,6 +101,11 @@ export class ScrollCraft {
 
   zoom(target: Target, options?: ZoomOptions): this {
     this.cleanups.push(_zoom(target, options))
+    return this
+  }
+
+  liquidSwipe(target: Target, options?: LiquidSwipeOptions): this {
+    this.cleanups.push(_liquidSwipe(target, options))
     return this
   }
 

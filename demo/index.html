@@ -195,6 +195,59 @@
     .prev-parallax-layer:nth-child(3) { width: 50px; height: 50px; background: rgba(255,209,102,0.12); border: 1px solid rgba(255,209,102,0.25); top: 30px; right: 40px; border-radius: 50%; }
     /* chainable API */
     .prev-chain-code { width: 100%; font-family: "Space Mono", monospace; font-size: 0.7rem; line-height: 1.9; color: #a0a0b8; }
+
+    /* liquid swipe */
+    .sc-liquid {
+      position: relative; width: 100%; height: 100%;
+      overflow: hidden; border-radius: 12px; cursor: grab;
+    }
+    .sc-liquid:active { cursor: grabbing; }
+    .sc-liquid-base, .sc-liquid-reveal {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+    }
+    .sc-liquid-base {
+      background: radial-gradient(ellipse at 60% 30%, rgba(0,255,209,0.12), transparent 55%),
+                  linear-gradient(160deg, #06061a 0%, #0e0620 100%);
+    }
+    .sc-liquid-reveal {
+      background: linear-gradient(135deg, #00c9ff 0%, var(--magenta) 55%, var(--gold) 100%);
+    }
+    .liquid-label {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      opacity: 0.55; margin-bottom: 2px;
+    }
+    .liquid-headline {
+      font-family: 'Syne', sans-serif; font-weight: 900;
+      font-size: clamp(1.3rem, 4vw, 1.9rem); line-height: 1.05;
+      text-align: center;
+    }
+    .sc-liquid-base .liquid-label { color: var(--cyan); }
+    .sc-liquid-base .liquid-headline { color: var(--text); }
+    .sc-liquid-reveal .liquid-label,
+    .sc-liquid-reveal .liquid-headline { color: #04040F; }
+    .sc-liquid-handle {
+      position: absolute; top: 0; left: 50%;
+      /* JS controls translateY; CSS keeps it horizontally centred */
+      margin-left: -68px; width: 136px;
+      z-index: 10; touch-action: none; user-select: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 18px;
+      background: rgba(255,255,255,0.14); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.32); border-radius: 99px;
+      color: #fff; font-family: 'Space Mono', monospace;
+      font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: grab; transition: background 0.2s, border-color 0.2s;
+      outline-offset: 3px;
+    }
+    .sc-liquid-handle:active { cursor: grabbing; }
+    .sc-liquid-handle:focus-visible {
+      outline: 2px solid var(--cyan);
+    }
+    .sc-liquid-handle svg { width: 12px; height: 12px; flex-shrink: 0; }
+
     /* footer */
     .footer { text-align: center; padding: 48px 24px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; border-top: 1px solid var(--border); }
     .footer a { color: var(--cyan); text-decoration: none; }
@@ -214,7 +267,7 @@
 <div class="hero">
   <p class="hero-kicker">scroll-craft v0.1</p>
   <h1>Scroll animation<br/><em>that ships.</em></h1>
-  <p>Zero dependencies. ~4KB. IntersectionObserver-powered reveals, counters, progress fills, staggers, zooms, and text reveals — all in TypeScript.</p>
+  <p>Zero dependencies. ~4KB. IntersectionObserver-powered reveals, counters, staggers, zooms, text reveals, liquid swipe, and more — all in TypeScript.</p>
   <div class="hero-row">
     <div class="install-box">
       <span>npm</span> install scroll-craft
@@ -240,6 +293,7 @@
   <button class="filter-btn" data-filter="scroll">Scroll</button>
   <button class="filter-btn" data-filter="scene">Scene</button>
   <button class="filter-btn" data-filter="parallax">Parallax</button>
+  <button class="filter-btn" data-filter="liquid">Liquid</button>
   <button class="filter-btn" data-filter="api">API</button>
 </div>
 
@@ -535,6 +589,46 @@
   speed: 0.3,
   axis:  <span class="str">"y"</span>,
   clamp: 80,
+})</div>
+    </div>
+  </div>
+
+  <!-- Liquid Swipe -->
+  <div class="effect-card" data-category="liquid">
+    <div class="preview" id="prev-liquid" style="padding:0;cursor:grab">
+      <div id="liquid-demo" class="sc-liquid" style="border-radius:0">
+        <div class="sc-liquid-base">
+          <span class="liquid-label">Base layer</span>
+          <span class="liquid-headline">Drag to<br/>reveal</span>
+        </div>
+        <div class="sc-liquid-reveal">
+          <span class="liquid-label">Revealed!</span>
+          <span class="liquid-headline">Liquid<br/>Swipe</span>
+        </div>
+        <button class="sc-liquid-handle" type="button" aria-label="Swipe to reveal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          Swipe up
+        </button>
+      </div>
+    </div>
+    <div class="card-foot">
+      <div class="card-head-row"><span class="effect-name">Liquid Swipe</span><span class="effect-tag">Effect 11</span></div>
+      <p class="effect-desc">Drag a handle to reveal content behind a curved elastic edge. CSS/SVG clip-path mask — no WebGL required. Snap, keyboard, and reduced-motion aware.</p>
+      <div class="card-actions">
+        <button class="replay-btn" data-replay="liquid-swipe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Reset</button>
+        <button class="code-btn" data-code="liquid-swipe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
+      </div>
+    </div>
+    <div class="code-drawer" id="code-liquid-swipe">
+      <div class="code-block"><span class="kw">import</span> { <span class="fn">liquidSwipe</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">liquidSwipe</span>(<span class="str">'#liquid-demo'</span>, {
+  direction:  <span class="str">'up'</span>,
+  threshold:  0.65,
+  tension:    0.35,
+  snap:       <span class="kw">true</span>,
+  onComplete: () => <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'revealed!'</span>),
+  onReset:    () => <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'reset'</span>),
 })</div>
     </div>
   </div>
@@ -850,6 +944,131 @@
       setTimeout(() => { l.style.transform = '' }, 700)
     })
   }
+
+  // ── Liquid Swipe (inline implementation for demo — no module bundler)
+  ;(function() {
+    const root = document.getElementById('liquid-demo')
+    const revealEl = root?.querySelector('.sc-liquid-reveal')
+    const handleEl = root?.querySelector('.sc-liquid-handle')
+    if (!root || !revealEl || !handleEl) return
+
+    let idCounter = 0
+    const clipId = 'sc-lq-demo-' + (++idCounter)
+    const TENSION = 0.35, THRESHOLD = 0.65, SNAP_DUR = 450
+
+    // Build inline SVG clip path
+    const svgNS = 'http://www.w3.org/2000/svg'
+    const svgEl = document.createElementNS(svgNS, 'svg')
+    svgEl.setAttribute('aria-hidden', 'true')
+    svgEl.style.cssText = 'position:absolute;width:0;height:0;overflow:visible;pointer-events:none;top:0;left:0'
+    const defs = document.createElementNS(svgNS, 'defs')
+    const cp = document.createElementNS(svgNS, 'clipPath')
+    cp.setAttribute('id', clipId)
+    cp.setAttribute('clipPathUnits', 'userSpaceOnUse')
+    const pathEl = document.createElementNS(svgNS, 'path')
+    cp.appendChild(pathEl); defs.appendChild(cp); svgEl.appendChild(defs)
+    root.appendChild(svgEl)
+
+    revealEl.style.clipPath = `url(#${clipId})`
+
+    let progress = 0, curveStretch = 0, dragging = false
+    let dragStartY = 0, dragStartProgress = 0
+    let snapRafId = null, rafId = null, animating = false
+
+    function easeOut(t) { return 1 - (1-t)**3 }
+
+    function getRect() { return root.getBoundingClientRect() }
+
+    function buildPath(rect) {
+      const { width: W, height: H } = rect
+      if (!W || !H) return
+      const maxCurve = Math.min(TENSION * H * 0.4, H * 0.28)
+      const curve = maxCurve * curveStretch
+      const edgeY = H * (1 - progress)
+      pathEl.setAttribute('d', `M 0 ${edgeY} Q ${W/2} ${edgeY - curve} ${W} ${edgeY} L ${W} ${H} L 0 ${H} Z`)
+    }
+
+    function applyHandle(rect) {
+      const edgeY = rect.height * (1 - progress)
+      const hH = handleEl.offsetHeight
+      handleEl.style.transform = `translate3d(0, ${edgeY - hH * 0.5}px, 0)`
+      handleEl.querySelector('svg')?.style && (handleEl.querySelector('svg').style.transform = progress > 0.5 ? 'rotate(180deg)' : '')
+    }
+
+    function render() {
+      const rect = getRect()
+      buildPath(rect)
+      applyHandle(rect)
+      root.style.setProperty('--sc-liquid-progress', progress.toFixed(4))
+      root.style.setProperty('--sc-liquid-edge', (rect.height * (1-progress)).toFixed(2) + 'px')
+    }
+
+    function snapTo(to, dur) {
+      if (snapRafId) { cancelAnimationFrame(snapRafId); snapRafId = null }
+      const from = progress, fromC = curveStretch, start = performance.now()
+      animating = true
+      ;(function step(now) {
+        const t = Math.min(1, (now - start) / dur)
+        const e = easeOut(t)
+        progress = from + (to - from) * e
+        curveStretch = fromC * (1 - e)
+        render()
+        if (t < 1) { snapRafId = requestAnimationFrame(step) }
+        else { progress = to; curveStretch = 0; animating = false; snapRafId = null; render() }
+      })(performance.now())
+    }
+
+    handleEl.addEventListener('pointerdown', e => {
+      if (animating && snapRafId) { cancelAnimationFrame(snapRafId); snapRafId = null; animating = false }
+      else if (animating) return
+      dragging = true
+      dragStartY = e.clientY
+      dragStartProgress = progress
+      handleEl.setPointerCapture(e.pointerId)
+      e.preventDefault()
+    })
+
+    handleEl.addEventListener('pointermove', e => {
+      if (!dragging) return
+      const rect = getRect()
+      const dy = e.clientY - dragStartY
+      const dp = -dy / rect.height
+      progress = Math.max(0, Math.min(1, dragStartProgress + dp))
+      curveStretch = Math.min(1, Math.abs(dy) / (rect.height * 0.25))
+      if (rafId) return
+      rafId = requestAnimationFrame(() => { rafId = null; render() })
+    })
+
+    handleEl.addEventListener('pointerup', () => {
+      if (!dragging) return
+      dragging = false
+      snapTo(progress >= THRESHOLD ? 1 : 0, SNAP_DUR)
+    })
+    handleEl.addEventListener('pointercancel', () => {
+      if (!dragging) return
+      dragging = false
+      snapTo(progress >= THRESHOLD ? 1 : 0, SNAP_DUR)
+    })
+
+    handleEl.addEventListener('keydown', e => {
+      const step = 0.1
+      let next = progress
+      if (e.key==='ArrowUp') { e.preventDefault(); next = Math.min(1, next+step) }
+      else if (e.key==='ArrowDown') { e.preventDefault(); next = Math.max(0, next-step) }
+      else if (e.key==='Home') { e.preventDefault(); next = 0 }
+      else if (e.key==='End') { e.preventDefault(); next = 1 }
+      else if (e.key==='Enter'||e.key===' ') { e.preventDefault(); next = next>0.5?0:1 }
+      else return
+      if (next !== progress) snapTo(next, 300)
+    })
+
+    window.addEventListener('resize', () => { if (!dragging) render() })
+
+    render()
+
+    // Replay = reset to 0
+    replays['liquid-swipe'] = () => snapTo(0, 450)
+  })()
 
   document.getElementById('copy-install')?.addEventListener('click', async ()=>{
     await navigator.clipboard.writeText('npm install scroll-craft').catch(()=>{})
