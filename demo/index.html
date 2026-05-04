@@ -248,6 +248,59 @@
     }
     .sc-liquid-handle svg { width: 12px; height: 12px; flex-shrink: 0; }
 
+    /* ── Joystick ── */
+    .sc-joystick-base {
+      position: relative;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: #070715;
+      box-shadow:
+        inset 8px 8px 20px rgba(0,0,0,0.75),
+        inset -4px -4px 12px rgba(255,255,255,0.04),
+        0 0 0 1px rgba(255,255,255,0.04);
+      flex-shrink: 0;
+    }
+    .sc-joystick-knob {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 56px; height: 56px;
+      margin-top: -28px; margin-left: -28px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #14142c, #0c0c1e);
+      box-shadow:
+        6px 6px 16px rgba(0,0,0,0.7),
+        -3px -3px 10px rgba(255,255,255,0.06),
+        0 0 0 1px rgba(255,255,255,0.07),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      border: none; cursor: grab;
+      touch-action: none; user-select: none;
+      transition: box-shadow 0.15s;
+      outline-offset: 3px;
+    }
+    .sc-joystick-knob:active { cursor: grabbing; }
+    .sc-joystick-knob:focus-visible { outline: 2px solid var(--cyan); }
+    .sc-joystick-dot {
+      position: absolute;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      transition: background 0.1s ease, box-shadow 0.12s ease;
+    }
+    .sc-joystick-dot.sc-active {
+      background: var(--cyan);
+      box-shadow: 0 0 5px var(--cyan), 0 0 12px rgba(0,255,209,0.45);
+    }
+    .joystick-readout {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    }
+    .joy-val {
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 4px 10px; min-width: 70px; text-align: center;
+      transition: color 0.1s;
+    }
     /* footer */
     .footer { text-align: center; padding: 48px 24px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; border-top: 1px solid var(--border); }
     .footer a { color: var(--cyan); text-decoration: none; }
@@ -294,6 +347,7 @@
   <button class="filter-btn" data-filter="scene">Scene</button>
   <button class="filter-btn" data-filter="parallax">Parallax</button>
   <button class="filter-btn" data-filter="liquid">Liquid</button>
+  <button class="filter-btn" data-filter="joystick">Joystick</button>
   <button class="filter-btn" data-filter="api">API</button>
 </div>
 
@@ -589,6 +643,63 @@
   speed: 0.3,
   axis:  <span class="str">"y"</span>,
   clamp: 80,
+})</div>
+    </div>
+  </div>
+
+  <!-- Joystick -->
+  <div class="effect-card" data-category="joystick">
+    <div class="preview" id="prev-joystick" style="height:320px">
+      <div class="preview-inner" style="flex-direction:column;gap:18px;padding:20px">
+
+        <div id="joystick-demo" style="display:flex;align-items:center;justify-content:center">
+          <div class="sc-joystick-base">
+            <button class="sc-joystick-knob" type="button" aria-label="Joystick control"></button>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+            <span class="sc-joystick-dot"></span>
+          </div>
+        </div>
+
+        <div class="joystick-readout">
+          <span class="joy-val" id="joy-x">x: 0.00</span>
+          <span class="joy-val" id="joy-y">y: 0.00</span>
+          <span class="joy-val" id="joy-angle">∠ 0°</span>
+          <span class="joy-val" id="joy-prog">⊙ 0%</span>
+        </div>
+
+      </div>
+    </div>
+    <div class="card-foot">
+      <div class="card-head-row"><span class="effect-name">Neumorphic Joystick</span><span class="effect-tag">Effect 12</span></div>
+      <p class="effect-desc">Drag the knob inside the recessed circle. Radial indicator dots light up in the direction of movement. Springs back to center on release.</p>
+      <div class="card-actions">
+        <button class="replay-btn" data-replay="joystick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Reset</button>
+        <button class="code-btn" data-code="joystick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
+      </div>
+    </div>
+    <div class="code-drawer" id="code-joystick">
+      <div class="code-block"><span class="kw">import</span> { <span class="fn">joystick</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
+
+<span class="fn">joystick</span>(<span class="str">'.sc-joystick-base'</span>, {
+  radius:          80,
+  returnToCenter:  <span class="kw">true</span>,
+  spring:          <span class="kw">true</span>,
+  onMove: ({ x, y, angle, progress }) => {
+    <span class="fn">console</span>.<span class="fn">log</span>(x, y, angle, progress)
+  },
+  onRelease: (state) => {
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'released'</span>, state)
+  },
 })</div>
     </div>
   </div>
@@ -944,6 +1055,100 @@
       setTimeout(() => { l.style.transform = '' }, 700)
     })
   }
+
+  // ── Joystick
+  ;(function() {
+    const BASE_SIZE = 200, RADIUS = 80, DOT_RING = 84
+    const base = document.querySelector('#joystick-demo .sc-joystick-base')
+    const knob = document.querySelector('#joystick-demo .sc-joystick-knob')
+    const dots = [...document.querySelectorAll('#joystick-demo .sc-joystick-dot')]
+    const elX = document.getElementById('joy-x'), elY = document.getElementById('joy-y')
+    const elA = document.getElementById('joy-angle'), elP = document.getElementById('joy-prog')
+    if (!base || !knob) return
+
+    // Position 12 dots evenly around the ring
+    dots.forEach((dot, i) => {
+      const a = (i * 360 / dots.length) * Math.PI / 180
+      dot.style.left = (BASE_SIZE/2 + DOT_RING * Math.sin(a) - 3) + 'px'
+      dot.style.top  = (BASE_SIZE/2 - DOT_RING * Math.cos(a) - 3) + 'px'
+    })
+
+    let cx = 0, cy = 0, kx = 0, ky = 0, dragging = false
+    let rafId = null, retId = null
+
+    function getCenter() {
+      const r = base.getBoundingClientRect()
+      cx = r.left + r.width / 2; cy = r.top + r.height / 2
+    }
+    function springEase(t) { return 1 - Math.cos(t * Math.PI * 1.5) * Math.pow(2, -10 * t) }
+
+    function state(x, y) {
+      const dist = Math.sqrt(x*x + y*y), prog = Math.min(1, dist/RADIUS)
+      const angle = dist < 0.5 ? 0 : (Math.atan2(x, -y) * 180/Math.PI + 360) % 360
+      return { x: x/RADIUS, y: y/RADIUS, angle, dist, prog }
+    }
+
+    function updateDots(s) {
+      const n = dots.length, step = 360/n
+      const active = Math.round(s.prog * Math.min(5, Math.ceil(n/2.4)))
+      dots.forEach((d, i) => {
+        let diff = Math.abs(s.angle - i*step); if (diff>180) diff=360-diff
+        d.classList.toggle('sc-active', active>0 && diff < step*(active+0.5))
+      })
+    }
+
+    function render() {
+      knob.style.transform = `translate3d(${kx}px,${ky}px,0)`
+      const s = state(kx, ky)
+      updateDots(s)
+      if (elX) elX.textContent = `x: ${s.x.toFixed(2)}`
+      if (elY) elY.textContent = `y: ${s.y.toFixed(2)}`
+      if (elA) elA.textContent = `∠ ${Math.round(s.angle)}°`
+      if (elP) elP.textContent = `⊙ ${Math.round(s.prog*100)}%`
+    }
+
+    function springBack() {
+      if (retId) { cancelAnimationFrame(retId); retId = null }
+      const fx = kx, fy = ky, t0 = performance.now()
+      ;(function step(now) {
+        const t = Math.min(1, (now - t0) / 420), e = springEase(t)
+        kx = fx*(1-e); ky = fy*(1-e); render()
+        if (t<1) retId = requestAnimationFrame(step)
+        else { kx=0; ky=0; retId=null; render() }
+      })(performance.now())
+    }
+
+    function clamp(x, y) {
+      const d = Math.sqrt(x*x+y*y); if (d>RADIUS){const s=RADIUS/d;return[x*s,y*s]}return[x,y]
+    }
+
+    getCenter()
+    knob.addEventListener('pointerdown', e => {
+      if (retId){cancelAnimationFrame(retId);retId=null}
+      dragging=true; getCenter()
+      knob.setPointerCapture(e.pointerId); e.preventDefault()
+    })
+    knob.addEventListener('pointermove', e => {
+      if (!dragging) return
+      ;[kx, ky] = clamp(e.clientX-cx, e.clientY-cy)
+      if (rafId) return; rafId = requestAnimationFrame(() => {rafId=null; render()})
+    })
+    knob.addEventListener('pointerup', () => { if(!dragging) return; dragging=false; springBack() })
+    knob.addEventListener('pointercancel', () => { if(!dragging) return; dragging=false; springBack() })
+    knob.addEventListener('keydown', e => {
+      const step = RADIUS*0.15
+      if (e.key==='ArrowUp')    {e.preventDefault();ky-=step}
+      else if(e.key==='ArrowDown') {e.preventDefault();ky+=step}
+      else if(e.key==='ArrowLeft') {e.preventDefault();kx-=step}
+      else if(e.key==='ArrowRight'){e.preventDefault();kx+=step}
+      else if(e.key==='Home'||e.key==='Escape'){e.preventDefault();springBack();return}
+      else return
+      ;[kx,ky]=clamp(kx,ky); render()
+    })
+    window.addEventListener('resize', getCenter)
+    render()
+    replays['joystick'] = () => springBack()
+  })()
 
   // ── Liquid Swipe (inline implementation for demo — no module bundler)
   ;(function() {

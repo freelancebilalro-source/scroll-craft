@@ -10,6 +10,7 @@ import {
   textReveal as _textReveal,
   zoom as _zoom,
   liquidSwipe as _liquidSwipe,
+  joystick as _joystick,
   type BlurRevealOptions,
   type RevealOptions,
   type CounterOptions,
@@ -24,12 +25,14 @@ import {
   type ZoomOptions,
   type LiquidSwipeOptions,
   type LiquidSwipeDirection,
+  type JoystickOptions,
+  type JoystickState,
 } from './effects'
 
-export type { BlurRevealOptions, RevealOptions, CounterOptions, ParallaxOptions, ProgressOptions, SceneOptions, SceneStep, SceneValues, ScrollProgressOptions, StaggerOptions, TextRevealOptions, ZoomOptions, Direction, LiquidSwipeOptions, LiquidSwipeDirection } from './effects'
+export type { BlurRevealOptions, RevealOptions, CounterOptions, ParallaxOptions, ProgressOptions, SceneOptions, SceneStep, SceneValues, ScrollProgressOptions, StaggerOptions, TextRevealOptions, ZoomOptions, Direction, LiquidSwipeOptions, LiquidSwipeDirection, JoystickOptions, JoystickState } from './effects'
 export type { EaseName, EaseFn } from './easing'
 export { easings, resolveEase } from './easing'
-export { blurReveal, reveal, counter, parallax, progress, scene, scrollProgress, stagger, textReveal, zoom, liquidSwipe } from './effects'
+export { blurReveal, reveal, counter, parallax, progress, scene, scrollProgress, stagger, textReveal, zoom, liquidSwipe, joystick } from './effects'
 
 // ─── Class API ────────────────────────────────────────────────────────────────
 
@@ -106,6 +109,11 @@ export class ScrollCraft {
 
   liquidSwipe(target: Target, options?: LiquidSwipeOptions): this {
     this.cleanups.push(_liquidSwipe(target, options))
+    return this
+  }
+
+  joystick(target: Target, options?: JoystickOptions): this {
+    this.cleanups.push(_joystick(target, options))
     return this
   }
 
