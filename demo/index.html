@@ -1416,7 +1416,7 @@
 
     let idCounter = 0
     const clipId = 'sc-lq-demo-' + (++idCounter)
-    const TENSION = 0.35, THRESHOLD = 0.65, SNAP_DUR = 450
+    const TENSION = 0.35, THRESHOLD = 0.65, SNAP_DUR = 450, HANDLE_PAD = 24
 
     // Build inline SVG clip path
     const svgNS = 'http://www.w3.org/2000/svg'
@@ -1453,16 +1453,21 @@
     function applyHandle(rect) {
       const edgeY = rect.height * (1 - progress)
       const hH = handleEl.offsetHeight
-      handleEl.style.transform = `translate3d(0, ${edgeY - hH * 0.5}px, 0)`
+      const minY = HANDLE_PAD
+      const maxY = Math.max(minY, rect.height - hH - HANDLE_PAD)
+      const handleY = Math.min(maxY, Math.max(minY, edgeY - hH * 0.5))
+      handleEl.style.transform = `translate3d(0, ${handleY}px, 0)`
       handleEl.querySelector('svg')?.style && (handleEl.querySelector('svg').style.transform = progress > 0.5 ? 'rotate(180deg)' : '')
+      return handleY
     }
 
     function render() {
       const rect = getRect()
       buildPath(rect)
-      applyHandle(rect)
+      const handleY = applyHandle(rect)
       root.style.setProperty('--sc-liquid-progress', progress.toFixed(4))
       root.style.setProperty('--sc-liquid-edge', (rect.height * (1-progress)).toFixed(2) + 'px')
+      root.style.setProperty('--sc-liquid-handle-y', `${handleY.toFixed(2)}px`)
     }
 
     function bounceHandle() {
@@ -1471,13 +1476,11 @@
         const t = Math.min(1, (now - bounceStart) / 400)
         const bounceEase = Math.abs(Math.sin(t * Math.PI))
         const offset = bounceEase * 8
-        handleEl.style.transform = `translate3d(0, calc(var(--sc-liquid-edge, 130px) + ${progress > 0.5 ? offset : -offset}px), 0)`
+        handleEl.style.transform = `translate3d(0, calc(var(--sc-liquid-handle-y, 130px) + ${progress > 0.5 ? offset : -offset}px), 0)`
         if (t < 1) requestAnimationFrame(bounce)
         else {
           const rect = getRect()
-          const edgeY = rect.height * (1 - progress)
-          const hH = handleEl.offsetHeight
-          handleEl.style.transform = `translate3d(0, ${edgeY - hH * 0.5}px, 0)`
+          applyHandle(rect)
         }
       })(performance.now())
     }

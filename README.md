@@ -387,7 +387,7 @@ stop()
 .sc-liquid-handle   { left: 50%; margin-left: -70px; width: 140px; }
 ```
 
-Give the container enough height for the handle travel. The demo uses a 360px preview so the swipe handle remains visible at both ends of the motion.
+Give the container enough height and clamp the handle travel with top/bottom padding. The demo uses a 360px preview and 24px handle padding so the swipe handle remains visible at both ends of the motion.
 
 The effect sets two CSS custom properties on the root element you can use for styling:
 
