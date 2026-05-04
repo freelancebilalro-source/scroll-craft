@@ -2314,7 +2314,7 @@ export function joystick(
     const js = buildJoystickState(state.knobX, state.knobY)
 
     if (state.knobEl) {
-      state.knobEl.style.transform = `translate3d(${state.knobX}px, ${state.knobY}px, 0)`
+      state.knobEl.style.transform = `translate3d(${state.knobX}px, ${state.knobY}px, 0) rotateX(calc(var(--sc-joystick-y) * -10deg)) rotateY(calc(var(--sc-joystick-x) * 10deg))`
       state.knobEl.setAttribute(
         'aria-valuetext',
         `x ${js.x.toFixed(2)}, y ${js.y.toFixed(2)}, angle ${Math.round(js.angle)} degrees`,
@@ -2422,6 +2422,7 @@ export function joystick(
           state.returnRafId = null
         }
         state.dragging = true
+        state.root.classList.add('sc-dragging')
         const c = computeCenter(root)
         state.cx = c.cx
         state.cy = c.cy
@@ -2444,6 +2445,7 @@ export function joystick(
       function onPointerUp(_e: PointerEvent): void {
         if (!state.dragging) return
         state.dragging = false
+        state.root.classList.remove('sc-dragging')
         if (returnToCenter) {
           animateReturn(state, () => onRelease?.(buildJoystickState(0, 0)))
         } else {
@@ -2528,6 +2530,8 @@ export function joystick(
       }
 
       state.indicatorEls.forEach((dot) => dot.classList.remove('sc-active'))
+
+      state.root.classList.remove('sc-dragging')
 
       if (state.addedRootPosition) state.root.style.position = ''
 

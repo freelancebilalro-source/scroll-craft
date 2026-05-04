@@ -249,56 +249,226 @@
     .sc-liquid-handle svg { width: 12px; height: 12px; flex-shrink: 0; }
 
     /* ── Joystick ── */
+    #prev-joystick {
+      background:
+        radial-gradient(circle at 50% 36%, rgba(0,255,209,0.09), transparent 34%),
+        radial-gradient(circle at 50% 105%, rgba(255,0,200,0.06), transparent 42%),
+        linear-gradient(180deg, #090a18 0%, #050611 100%);
+    }
+    .joystick-panel {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      width: min(100%, 318px);
+      min-height: 286px;
+      padding: 18px 16px 16px;
+      border: 1px solid rgba(0,255,209,0.16);
+      border-radius: 18px;
+      background:
+        linear-gradient(150deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018) 38%, rgba(0,0,0,0.12)),
+        #080914;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        inset 0 -1px 0 rgba(0,0,0,0.55),
+        0 24px 70px rgba(0,0,0,0.54),
+        0 0 34px rgba(0,255,209,0.08);
+      overflow: hidden;
+    }
+    .joystick-panel::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 17px;
+      background:
+        radial-gradient(circle at 50% 48%, rgba(0,255,209,0.1), transparent 48%),
+        linear-gradient(90deg, transparent, rgba(255,255,255,0.035), transparent);
+      pointer-events: none;
+      opacity: 0.75;
+    }
+    .joystick-stage {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 260px;
+      height: 240px;
+      perspective: 720px;
+      z-index: 1;
+    }
     .sc-joystick-base {
       position: relative;
-      width: 200px; height: 200px;
+      width: 240px; height: 240px;
       border-radius: 50%;
-      background: #070715;
+      --sc-joystick-x: 0;
+      --sc-joystick-y: 0;
+      --sc-joystick-progress: 0;
+      background:
+        radial-gradient(circle at 50% 52%, #03050d 0 35%, transparent 36%),
+        radial-gradient(circle at 42% 36%, rgba(255,255,255,0.08), transparent 30%),
+        radial-gradient(circle at 58% 68%, rgba(0,0,0,0.72), transparent 38%),
+        linear-gradient(145deg, #14182a 0%, #070913 48%, #02030a 100%);
       box-shadow:
-        inset 8px 8px 20px rgba(0,0,0,0.75),
-        inset -4px -4px 12px rgba(255,255,255,0.04),
-        0 0 0 1px rgba(255,255,255,0.04);
+        inset 18px 18px 38px rgba(0,0,0,0.88),
+        inset -10px -10px 24px rgba(120,180,210,0.07),
+        inset 0 0 0 1px rgba(255,255,255,0.045),
+        0 0 0 1px rgba(0,255,209,0.08),
+        0 20px 42px rgba(0,0,0,0.72),
+        0 0 calc(18px + (var(--sc-joystick-progress) * 18px)) rgba(0,255,209,0.11);
       flex-shrink: 0;
+      transform-style: preserve-3d;
+      transition: box-shadow 0.22s ease;
+    }
+    .sc-joystick-base::before {
+      content: "";
+      position: absolute;
+      inset: 37px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 46% 38%, rgba(255,255,255,0.055), transparent 22%),
+        radial-gradient(circle at 50% 58%, #02030a 0%, #060814 48%, #010208 100%);
+      box-shadow:
+        inset 12px 12px 28px rgba(0,0,0,0.9),
+        inset -7px -8px 20px rgba(80,160,180,0.055),
+        0 0 0 1px rgba(255,255,255,0.035);
+      pointer-events: none;
+    }
+    .sc-joystick-base::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: calc(74px + (var(--sc-joystick-progress) * 18px));
+      height: calc(28px + (var(--sc-joystick-progress) * 8px));
+      border-radius: 50%;
+      background: rgba(0,0,0,0.72);
+      filter: blur(9px);
+      opacity: calc(0.42 + (var(--sc-joystick-progress) * 0.28));
+      transform:
+        translate(-50%, -50%)
+        translate3d(calc(var(--sc-joystick-x) * -10px), calc(22px + (var(--sc-joystick-y) * -7px)), -1px)
+        scaleX(calc(1 + (var(--sc-joystick-progress) * 0.22)));
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 0.18s ease, filter 0.18s ease;
     }
     .sc-joystick-knob {
       position: absolute;
       top: 50%; left: 50%;
-      width: 56px; height: 56px;
-      margin-top: -28px; margin-left: -28px;
+      width: 84px; height: 84px;
+      margin-top: -42px; margin-left: -42px;
       border-radius: 50%;
-      background: linear-gradient(145deg, #14142c, #0c0c1e);
+      background:
+        radial-gradient(circle at 34% 25%, rgba(255,255,255,0.28), transparent 9%),
+        radial-gradient(circle at 35% 30%, #303853 0%, #171c31 32%, #0b0e1d 62%, #03050c 100%);
       box-shadow:
-        6px 6px 16px rgba(0,0,0,0.7),
-        -3px -3px 10px rgba(255,255,255,0.06),
-        0 0 0 1px rgba(255,255,255,0.07),
-        inset 0 1px 0 rgba(255,255,255,0.08);
-      border: none; cursor: grab;
+        14px 18px 28px rgba(0,0,0,0.74),
+        -7px -8px 18px rgba(125,180,210,0.07),
+        0 0 0 1px rgba(255,255,255,0.055),
+        0 0 0 7px rgba(4,6,15,0.62),
+        inset 7px 8px 16px rgba(255,255,255,0.06),
+        inset -12px -14px 24px rgba(0,0,0,0.72);
+      border: 1px solid rgba(125,190,210,0.13);
+      cursor: grab;
       touch-action: none; user-select: none;
-      transition: box-shadow 0.15s;
+      transform-style: preserve-3d;
+      transition: box-shadow 0.15s ease, filter 0.15s ease;
       outline-offset: 3px;
+      z-index: 3;
+      will-change: transform;
+    }
+    .sc-joystick-knob::before {
+      content: "";
+      position: absolute;
+      inset: 13px 18px auto 18px;
+      height: 27px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 45% 25%, rgba(255,255,255,0.38), rgba(255,255,255,0.08) 38%, transparent 72%);
+      filter: blur(0.2px);
+      opacity: 0.72;
+      pointer-events: none;
+    }
+    .sc-joystick-knob::after {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.05);
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.05), inset 0 -8px 16px rgba(0,0,0,0.36);
+      pointer-events: none;
     }
     .sc-joystick-knob:active { cursor: grabbing; }
-    .sc-joystick-knob:focus-visible { outline: 2px solid var(--cyan); }
+    .sc-joystick-knob:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 6px;
+      box-shadow:
+        14px 18px 28px rgba(0,0,0,0.74),
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 0 0 7px rgba(4,6,15,0.62),
+        0 0 0 10px rgba(0,255,209,0.18),
+        inset 7px 8px 16px rgba(255,255,255,0.06),
+        inset -12px -14px 24px rgba(0,0,0,0.72);
+    }
+    .sc-joystick-base.sc-dragging {
+      box-shadow:
+        inset 18px 18px 38px rgba(0,0,0,0.88),
+        inset -10px -10px 24px rgba(120,180,210,0.075),
+        inset 0 0 0 1px rgba(255,255,255,0.055),
+        0 0 0 1px rgba(0,255,209,0.13),
+        0 22px 46px rgba(0,0,0,0.78),
+        0 0 42px rgba(0,255,209,0.18);
+    }
+    .sc-joystick-base.sc-dragging::after {
+      filter: blur(12px);
+      opacity: 0.78;
+    }
+    .sc-joystick-base.sc-dragging .sc-joystick-knob {
+      box-shadow:
+        18px 24px 34px rgba(0,0,0,0.82),
+        -8px -9px 18px rgba(125,180,210,0.08),
+        0 0 0 1px rgba(255,255,255,0.07),
+        0 0 0 7px rgba(4,6,15,0.7),
+        inset 8px 9px 16px rgba(255,255,255,0.07),
+        inset -14px -16px 26px rgba(0,0,0,0.76);
+    }
     .sc-joystick-dot {
       position: absolute;
-      width: 6px; height: 6px;
+      width: 8px; height: 8px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      transition: background 0.1s ease, box-shadow 0.12s ease;
+      background: rgba(105,135,150,0.18);
+      box-shadow:
+        inset 0 1px 1px rgba(255,255,255,0.08),
+        0 0 0 1px rgba(0,0,0,0.28);
+      z-index: 2;
+      transition: background 0.1s ease, box-shadow 0.12s ease, transform 0.12s ease;
     }
     .sc-joystick-dot.sc-active {
-      background: var(--cyan);
-      box-shadow: 0 0 5px var(--cyan), 0 0 12px rgba(0,255,209,0.45);
+      background: #14ffd9;
+      box-shadow:
+        0 0 6px rgba(20,255,217,0.95),
+        0 0 16px rgba(20,255,217,0.64),
+        0 0 28px rgba(20,255,217,0.28);
+      transform: scale(1.45);
     }
     .joystick-readout {
+      position: relative;
+      z-index: 1;
       display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
     }
     .joy-val {
       font-family: 'Space Mono', monospace; font-size: 10px;
-      color: var(--muted);
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border); border-radius: 6px;
-      padding: 4px 10px; min-width: 70px; text-align: center;
+      color: #8fa3b2;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018)),
+        #0a0c18;
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 7px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        inset 0 -1px 0 rgba(0,0,0,0.5),
+        0 8px 18px rgba(0,0,0,0.24);
+      padding: 5px 10px; min-width: 64px; text-align: center;
       transition: color 0.1s;
     }
     /* footer */
@@ -649,34 +819,34 @@
 
   <!-- Joystick -->
   <div class="effect-card" data-category="joystick">
-    <div class="preview" id="prev-joystick" style="height:320px">
-      <div class="preview-inner" style="flex-direction:column;gap:18px;padding:20px">
+    <div class="preview" id="prev-joystick" style="height:360px">
+      <div class="preview-inner" style="padding:16px">
+        <div id="joystick-demo" class="joystick-panel">
+          <div class="joystick-stage">
+            <div class="sc-joystick-base">
+              <button class="sc-joystick-knob" type="button" aria-label="Joystick control"></button>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+              <span class="sc-joystick-dot"></span>
+            </div>
+          </div>
 
-        <div id="joystick-demo" style="display:flex;align-items:center;justify-content:center">
-          <div class="sc-joystick-base">
-            <button class="sc-joystick-knob" type="button" aria-label="Joystick control"></button>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
-            <span class="sc-joystick-dot"></span>
+          <div class="joystick-readout">
+            <span class="joy-val" id="joy-x">x: 0.00</span>
+            <span class="joy-val" id="joy-y">y: 0.00</span>
+            <span class="joy-val" id="joy-angle">∠ 0°</span>
+            <span class="joy-val" id="joy-prog">⊙ 0%</span>
           </div>
         </div>
-
-        <div class="joystick-readout">
-          <span class="joy-val" id="joy-x">x: 0.00</span>
-          <span class="joy-val" id="joy-y">y: 0.00</span>
-          <span class="joy-val" id="joy-angle">∠ 0°</span>
-          <span class="joy-val" id="joy-prog">⊙ 0%</span>
-        </div>
-
       </div>
     </div>
     <div class="card-foot">
@@ -691,7 +861,7 @@
       <div class="code-block"><span class="kw">import</span> { <span class="fn">joystick</span> } <span class="kw">from</span> <span class="str">'scroll-craft'</span>
 
 <span class="fn">joystick</span>(<span class="str">'.sc-joystick-base'</span>, {
-  radius:          80,
+  radius:          64,
   returnToCenter:  <span class="kw">true</span>,
   spring:          <span class="kw">true</span>,
   onMove: ({ x, y, angle, progress }) => {
@@ -1058,7 +1228,7 @@
 
   // ── Joystick
   ;(function() {
-    const BASE_SIZE = 200, RADIUS = 80, DOT_RING = 84
+    const BASE_SIZE = 240, RADIUS = 64, DOT_RING = 104
     const base = document.querySelector('#joystick-demo .sc-joystick-base')
     const knob = document.querySelector('#joystick-demo .sc-joystick-knob')
     const dots = [...document.querySelectorAll('#joystick-demo .sc-joystick-dot')]
@@ -1069,8 +1239,8 @@
     // Position 12 dots evenly around the ring
     dots.forEach((dot, i) => {
       const a = (i * 360 / dots.length) * Math.PI / 180
-      dot.style.left = (BASE_SIZE/2 + DOT_RING * Math.sin(a) - 3) + 'px'
-      dot.style.top  = (BASE_SIZE/2 - DOT_RING * Math.cos(a) - 3) + 'px'
+      dot.style.left = (BASE_SIZE/2 + DOT_RING * Math.sin(a) - 4) + 'px'
+      dot.style.top  = (BASE_SIZE/2 - DOT_RING * Math.cos(a) - 4) + 'px'
     })
 
     let cx = 0, cy = 0, kx = 0, ky = 0, dragging = false
@@ -1098,8 +1268,11 @@
     }
 
     function render() {
-      knob.style.transform = `translate3d(${kx}px,${ky}px,0)`
       const s = state(kx, ky)
+      base.style.setProperty('--sc-joystick-x', s.x.toFixed(4))
+      base.style.setProperty('--sc-joystick-y', s.y.toFixed(4))
+      base.style.setProperty('--sc-joystick-progress', s.prog.toFixed(4))
+      knob.style.transform = `translate3d(${kx}px,${ky}px,0) rotateX(calc(var(--sc-joystick-y) * -10deg)) rotateY(calc(var(--sc-joystick-x) * 10deg))`
       updateDots(s)
       if (elX) elX.textContent = `x: ${s.x.toFixed(2)}`
       if (elY) elY.textContent = `y: ${s.y.toFixed(2)}`
@@ -1125,7 +1298,7 @@
     getCenter()
     knob.addEventListener('pointerdown', e => {
       if (retId){cancelAnimationFrame(retId);retId=null}
-      dragging=true; getCenter()
+      dragging=true; base.classList.add('sc-dragging'); getCenter()
       knob.setPointerCapture(e.pointerId); e.preventDefault()
     })
     knob.addEventListener('pointermove', e => {
@@ -1133,8 +1306,8 @@
       ;[kx, ky] = clamp(e.clientX-cx, e.clientY-cy)
       if (rafId) return; rafId = requestAnimationFrame(() => {rafId=null; render()})
     })
-    knob.addEventListener('pointerup', () => { if(!dragging) return; dragging=false; springBack() })
-    knob.addEventListener('pointercancel', () => { if(!dragging) return; dragging=false; springBack() })
+    knob.addEventListener('pointerup', () => { if(!dragging) return; dragging=false; base.classList.remove('sc-dragging'); springBack() })
+    knob.addEventListener('pointercancel', () => { if(!dragging) return; dragging=false; base.classList.remove('sc-dragging'); springBack() })
     knob.addEventListener('keydown', e => {
       const step = RADIUS*0.15
       if (e.key==='ArrowUp')    {e.preventDefault();ky-=step}
