@@ -379,13 +379,15 @@ stop()
 **Minimum CSS:**
 
 ```css
-.sc-liquid          { position: relative; overflow: hidden; }
+.sc-liquid          { position: relative; min-height: 360px; overflow: hidden; }
 .sc-liquid-base,
 .sc-liquid-reveal   { position: absolute; inset: 0; }
 .sc-liquid-handle   { position: absolute; top: 0; touch-action: none; }
 /* centre horizontally without conflicting with JS transform */
 .sc-liquid-handle   { left: 50%; margin-left: -70px; width: 140px; }
 ```
+
+Give the container enough height for the handle travel. The demo uses a 360px preview so the swipe handle remains visible at both ends of the motion.
 
 The effect sets two CSS custom properties on the root element you can use for styling:
 
