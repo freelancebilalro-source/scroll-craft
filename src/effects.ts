@@ -2283,8 +2283,7 @@ export function joystick(
   }
 
   function joySpringEase(t: number): number {
-    // Decaying cosine — subtle overshoot then settles
-    return 1 - Math.cos(t * Math.PI * 1.5) * Math.pow(2, -10 * t)
+    return 1 - (1 - t) ** 3
   }
 
   function joyEaseOut(t: number): number {
@@ -2314,7 +2313,9 @@ export function joystick(
     const js = buildJoystickState(state.knobX, state.knobY)
 
     if (state.knobEl) {
-      state.knobEl.style.transform = `translate3d(${state.knobX}px, ${state.knobY}px, 0) rotateX(calc(var(--sc-joystick-y) * -10deg)) rotateY(calc(var(--sc-joystick-x) * 10deg))`
+      state.root.style.setProperty('--sc-joystick-knob-x', `${state.knobX.toFixed(2)}px`)
+      state.root.style.setProperty('--sc-joystick-knob-y', `${state.knobY.toFixed(2)}px`)
+      state.knobEl.style.transform = 'translate3d(var(--sc-joystick-knob-x), var(--sc-joystick-knob-y), 18px) rotateX(calc(var(--sc-joystick-y) * -12deg)) rotateY(calc(var(--sc-joystick-x) * 12deg)) scale(var(--sc-joystick-knob-scale, 1))'
       state.knobEl.setAttribute(
         'aria-valuetext',
         `x ${js.x.toFixed(2)}, y ${js.y.toFixed(2)}, angle ${Math.round(js.angle)} degrees`,
@@ -2347,7 +2348,7 @@ export function joystick(
     const fromX = state.knobX
     const fromY = state.knobY
     const start = performance.now()
-    const duration = 420
+    const duration = 360
     const easeFn = spring ? joySpringEase : joyEaseOut
 
     function step(now: number): void {
@@ -2539,6 +2540,8 @@ export function joystick(
       state.root.style.removeProperty('--sc-joystick-y')
       state.root.style.removeProperty('--sc-joystick-angle')
       state.root.style.removeProperty('--sc-joystick-progress')
+      state.root.style.removeProperty('--sc-joystick-knob-x')
+      state.root.style.removeProperty('--sc-joystick-knob-y')
     })
   }
 }

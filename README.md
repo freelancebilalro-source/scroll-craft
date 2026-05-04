@@ -423,18 +423,24 @@ const stop = joystick('.sc-joystick-base', {
 stop() // cleanup
 ```
 
-**Required HTML structure:**
+**Recommended physical joystick structure:**
 
 ```html
 <div class="sc-joystick" id="joystick-demo">
-  <div class="sc-joystick-base">
+  <div class="sc-joystick-shell sc-joystick-base">
+    <div class="sc-joystick-led-ring">
+      <!-- 12 indicator dots — JS positions them in a ring -->
+      <span class="sc-joystick-dot"></span>
+      <!-- x 12 -->
+    </div>
 
-    <button class="sc-joystick-knob" type="button" aria-label="Joystick control"></button>
-
-    <!-- 12 indicator dots — JS positions them in a ring -->
-    <span class="sc-joystick-dot"></span>
-    <!-- × 12 -->
-
+    <div class="sc-joystick-socket">
+      <div class="sc-joystick-shadow"></div>
+      <button class="sc-joystick-knob" type="button" aria-label="Joystick control">
+        <span class="sc-joystick-knob-top"></span>
+        <span class="sc-joystick-knob-ridge"></span>
+      </button>
+    </div>
   </div>
 </div>
 ```
@@ -443,14 +449,15 @@ stop() // cleanup
 
 ```css
 /* Pass the sc-joystick-base as the joystick() target so its center is used */
-.sc-joystick-base  { position: relative; border-radius: 50%; }
+.sc-joystick-base  { position: relative; border-radius: 50%; transform-style: preserve-3d; }
+.sc-joystick-socket { position: absolute; inset: 50%; transform-style: preserve-3d; }
 .sc-joystick-knob  { position: absolute; top: 50%; left: 50%;
                      margin-top: -28px; margin-left: -28px;  /* half knob size */
                      touch-action: none; }
 .sc-joystick-dot   { position: absolute; border-radius: 50%; }
 ```
 
-The effect sets four CSS custom properties on the target root:
+The effect sets CSS custom properties on the target root. Use them for realistic tilt, shadow, and LED styling:
 
 | Property | Value |
 |---|---|
@@ -458,6 +465,10 @@ The effect sets four CSS custom properties on the target root:
 | `--sc-joystick-y` | Normalized y, `-1`–`1` |
 | `--sc-joystick-angle` | Degrees, `0`=top, clockwise |
 | `--sc-joystick-progress` | `0`–`1` (distance / radius) |
+| `--sc-joystick-knob-x` | Knob x translation in `px` |
+| `--sc-joystick-knob-y` | Knob y translation in `px` |
+
+The demo uses these variables to render a recessed socket, dynamic physical shadow, and a rubber thumbstick that tilts with `rotateX`/`rotateY` while dragging.
 
 **`JoystickState` object** (passed to `onMove` and `onRelease`):
 

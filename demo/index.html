@@ -251,9 +251,9 @@
     /* ── Joystick ── */
     #prev-joystick {
       background:
-        radial-gradient(circle at 50% 36%, rgba(0,255,209,0.09), transparent 34%),
-        radial-gradient(circle at 50% 105%, rgba(255,0,200,0.06), transparent 42%),
-        linear-gradient(180deg, #090a18 0%, #050611 100%);
+        radial-gradient(circle at 50% 34%, rgba(0,255,209,0.07), transparent 32%),
+        radial-gradient(circle at 50% 92%, rgba(0,0,0,0.64), transparent 38%),
+        linear-gradient(180deg, #060811 0%, #03040a 100%);
     }
     .joystick-panel {
       position: relative;
@@ -261,116 +261,160 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 16px;
-      width: min(100%, 318px);
-      min-height: 286px;
-      padding: 18px 16px 16px;
-      border: 1px solid rgba(0,255,209,0.16);
-      border-radius: 18px;
+      gap: 10px;
+      width: min(100%, 334px);
+      min-height: 324px;
+      padding: 14px 16px 13px;
+      border: 1px solid rgba(0,255,209,0.12);
+      border-radius: 16px;
       background:
-        linear-gradient(150deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018) 38%, rgba(0,0,0,0.12)),
-        #080914;
+        radial-gradient(circle at 50% 24%, rgba(0,255,209,0.055), transparent 42%),
+        linear-gradient(150deg, rgba(255,255,255,0.04), rgba(255,255,255,0.012) 36%, rgba(0,0,0,0.2)),
+        #050711;
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.08),
-        inset 0 -1px 0 rgba(0,0,0,0.55),
-        0 24px 70px rgba(0,0,0,0.54),
-        0 0 34px rgba(0,255,209,0.08);
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        inset 0 -1px 0 rgba(0,0,0,0.7),
+        0 26px 78px rgba(0,0,0,0.62),
+        0 0 30px rgba(0,255,209,0.055);
       overflow: hidden;
     }
     .joystick-panel::before {
       content: "";
       position: absolute;
       inset: 1px;
-      border-radius: 17px;
+      border-radius: 15px;
       background:
-        radial-gradient(circle at 50% 48%, rgba(0,255,209,0.1), transparent 48%),
-        linear-gradient(90deg, transparent, rgba(255,255,255,0.035), transparent);
+        radial-gradient(circle at 50% 44%, rgba(0,255,209,0.055), transparent 47%),
+        linear-gradient(90deg, transparent, rgba(255,255,255,0.026), transparent);
       pointer-events: none;
-      opacity: 0.75;
+      opacity: 0.7;
     }
-    .joystick-stage {
+    .sc-joystick {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 260px;
-      height: 240px;
-      perspective: 720px;
+      width: 282px;
+      height: 282px;
+      perspective: 820px;
       z-index: 1;
     }
+    .sc-joystick-shell,
     .sc-joystick-base {
       position: relative;
-      width: 240px; height: 240px;
+      width: 260px; height: 260px;
       border-radius: 50%;
       --sc-joystick-x: 0;
       --sc-joystick-y: 0;
       --sc-joystick-progress: 0;
+      --sc-joystick-knob-x: 0px;
+      --sc-joystick-knob-y: 0px;
+      --sc-joystick-knob-scale: 1;
       background:
-        radial-gradient(circle at 50% 52%, #03050d 0 35%, transparent 36%),
-        radial-gradient(circle at 42% 36%, rgba(255,255,255,0.08), transparent 30%),
-        radial-gradient(circle at 58% 68%, rgba(0,0,0,0.72), transparent 38%),
-        linear-gradient(145deg, #14182a 0%, #070913 48%, #02030a 100%);
+        radial-gradient(circle at 36% 28%, rgba(255,255,255,0.09), transparent 24%),
+        radial-gradient(circle at 68% 74%, rgba(0,0,0,0.74), transparent 36%),
+        radial-gradient(circle at 50% 50%, #111724 0 42%, #070a12 64%, #020309 100%);
       box-shadow:
-        inset 18px 18px 38px rgba(0,0,0,0.88),
-        inset -10px -10px 24px rgba(120,180,210,0.07),
+        inset 16px 16px 34px rgba(0,0,0,0.72),
+        inset -8px -8px 18px rgba(255,255,255,0.045),
         inset 0 0 0 1px rgba(255,255,255,0.045),
-        0 0 0 1px rgba(0,255,209,0.08),
-        0 20px 42px rgba(0,0,0,0.72),
-        0 0 calc(18px + (var(--sc-joystick-progress) * 18px)) rgba(0,255,209,0.11);
+        0 0 0 1px rgba(0,255,209,0.105),
+        0 24px 48px rgba(0,0,0,0.74),
+        0 0 calc(14px + (var(--sc-joystick-progress) * 16px)) rgba(0,255,209,0.08);
       flex-shrink: 0;
       transform-style: preserve-3d;
       transition: box-shadow 0.22s ease;
     }
+    .sc-joystick-shell::before,
     .sc-joystick-base::before {
       content: "";
       position: absolute;
-      inset: 37px;
+      inset: 8px;
       border-radius: 50%;
       background:
-        radial-gradient(circle at 46% 38%, rgba(255,255,255,0.055), transparent 22%),
-        radial-gradient(circle at 50% 58%, #02030a 0%, #060814 48%, #010208 100%);
+        radial-gradient(circle at 34% 28%, rgba(255,255,255,0.055), transparent 21%),
+        radial-gradient(circle at 50% 62%, rgba(0,0,0,0.44), transparent 50%),
+        linear-gradient(145deg, rgba(255,255,255,0.035), rgba(0,0,0,0.16));
       box-shadow:
-        inset 12px 12px 28px rgba(0,0,0,0.9),
-        inset -7px -8px 20px rgba(80,160,180,0.055),
-        0 0 0 1px rgba(255,255,255,0.035);
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -16px 24px rgba(0,0,0,0.42);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .sc-joystick-led-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      z-index: 2;
       pointer-events: none;
     }
-    .sc-joystick-base::after {
-      content: "";
+    .sc-joystick-socket {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: calc(74px + (var(--sc-joystick-progress) * 18px));
-      height: calc(28px + (var(--sc-joystick-progress) * 8px));
+      width: 158px;
+      height: 158px;
+      margin: -79px 0 0 -79px;
       border-radius: 50%;
-      background: rgba(0,0,0,0.72);
-      filter: blur(9px);
-      opacity: calc(0.42 + (var(--sc-joystick-progress) * 0.28));
+      overflow: visible;
+      background:
+        radial-gradient(circle at 50% 54%, #01020a 0 34%, #050815 51%, #121827 68%, #252c3a 69%, #070a13 78%, #020309 100%);
+      box-shadow:
+        inset 12px 12px 24px rgba(0,0,0,.65),
+        inset -6px -6px 14px rgba(255,255,255,.05),
+        inset 0 0 0 1px rgba(255,255,255,0.04),
+        0 0 0 1px rgba(0,0,0,0.7),
+        0 4px 18px rgba(0,0,0,0.62);
+      transform-style: preserve-3d;
+      z-index: 1;
+    }
+    .sc-joystick-socket::before {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 62%, rgba(0,0,0,0.72), transparent 60%),
+        radial-gradient(circle at 38% 28%, rgba(255,255,255,0.025), transparent 28%);
+      box-shadow: inset 9px 9px 22px rgba(0,0,0,0.7), inset -4px -5px 12px rgba(255,255,255,0.028);
+      pointer-events: none;
+    }
+    .sc-joystick-shadow {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: calc(78px + (var(--sc-joystick-progress) * 30px));
+      height: calc(30px + (var(--sc-joystick-progress) * 12px));
+      border-radius: 50%;
+      background: rgba(0,0,0,0.82);
+      filter: blur(calc(8px + (var(--sc-joystick-progress) * 5px)));
+      opacity: calc(0.5 + (var(--sc-joystick-progress) * 0.32));
       transform:
         translate(-50%, -50%)
-        translate3d(calc(var(--sc-joystick-x) * -10px), calc(22px + (var(--sc-joystick-y) * -7px)), -1px)
-        scaleX(calc(1 + (var(--sc-joystick-progress) * 0.22)));
+        translate3d(calc(var(--sc-joystick-x) * -16px), calc(25px + (var(--sc-joystick-y) * -12px)), -1px)
+        scaleX(calc(1 + (var(--sc-joystick-progress) * 0.32)));
       pointer-events: none;
       z-index: 1;
-      transition: opacity 0.18s ease, filter 0.18s ease;
+      transition: opacity 0.16s ease, filter 0.16s ease;
     }
     .sc-joystick-knob {
       position: absolute;
       top: 50%; left: 50%;
-      width: 84px; height: 84px;
-      margin-top: -42px; margin-left: -42px;
+      width: 78px; height: 78px;
+      margin-top: -39px; margin-left: -39px;
       border-radius: 50%;
       background:
-        radial-gradient(circle at 34% 25%, rgba(255,255,255,0.28), transparent 9%),
-        radial-gradient(circle at 35% 30%, #303853 0%, #171c31 32%, #0b0e1d 62%, #03050c 100%);
+        repeating-radial-gradient(circle at 50% 48%, rgba(255,255,255,0.022) 0 1px, transparent 1px 4px),
+        radial-gradient(circle at 34% 24%, rgba(255,255,255,0.15), transparent 13%),
+        radial-gradient(circle at 42% 32%, #252c3a 0%, #151b29 34%, #080b14 67%, #020309 100%);
       box-shadow:
-        14px 18px 28px rgba(0,0,0,0.74),
-        -7px -8px 18px rgba(125,180,210,0.07),
+        12px 17px 25px rgba(0,0,0,0.72),
+        -5px -6px 13px rgba(150,180,200,0.055),
         0 0 0 1px rgba(255,255,255,0.055),
-        0 0 0 7px rgba(4,6,15,0.62),
-        inset 7px 8px 16px rgba(255,255,255,0.06),
-        inset -12px -14px 24px rgba(0,0,0,0.72);
-      border: 1px solid rgba(125,190,210,0.13);
+        0 0 0 5px rgba(2,3,9,0.78),
+        inset 5px 6px 12px rgba(255,255,255,0.045),
+        inset -12px -15px 22px rgba(0,0,0,0.72);
+      border: 1px solid rgba(150,170,185,0.12);
       cursor: grab;
       touch-action: none; user-select: none;
       transform-style: preserve-3d;
@@ -379,24 +423,46 @@
       z-index: 3;
       will-change: transform;
     }
+    .sc-joystick-knob-top {
+      position: absolute;
+      inset: 9px 11px 19px;
+      border-radius: 50%;
+      background:
+        radial-gradient(ellipse at 35% 20%, rgba(255,255,255,0.18), rgba(255,255,255,0.045) 32%, transparent 70%),
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.22));
+      box-shadow:
+        inset 0 1px 2px rgba(255,255,255,0.06),
+        inset 0 -7px 12px rgba(0,0,0,0.36);
+      pointer-events: none;
+      transform: translateZ(9px);
+    }
+    .sc-joystick-knob-ridge {
+      position: absolute;
+      inset: 14px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.045);
+      box-shadow:
+        inset 0 1px 1px rgba(255,255,255,0.04),
+        inset 0 -7px 14px rgba(0,0,0,0.42);
+      pointer-events: none;
+      transform: translateZ(5px);
+    }
     .sc-joystick-knob::before {
       content: "";
       position: absolute;
-      inset: 13px 18px auto 18px;
-      height: 27px;
+      inset: 0;
       border-radius: 50%;
-      background: radial-gradient(ellipse at 45% 25%, rgba(255,255,255,0.38), rgba(255,255,255,0.08) 38%, transparent 72%);
-      filter: blur(0.2px);
-      opacity: 0.72;
+      background: repeating-radial-gradient(circle at 50% 50%, transparent 0 5px, rgba(255,255,255,0.018) 6px 7px);
+      opacity: 0.42;
       pointer-events: none;
     }
     .sc-joystick-knob::after {
       content: "";
       position: absolute;
-      inset: 9px;
+      inset: 5px;
       border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.05);
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.05), inset 0 -8px 16px rgba(0,0,0,0.36);
+      border: 1px solid rgba(255,255,255,0.035);
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.035), inset 0 -10px 16px rgba(0,0,0,0.38);
       pointer-events: none;
     }
     .sc-joystick-knob:active { cursor: grabbing; }
@@ -404,53 +470,60 @@
       outline: 2px solid var(--cyan);
       outline-offset: 6px;
       box-shadow:
-        14px 18px 28px rgba(0,0,0,0.74),
+        12px 17px 25px rgba(0,0,0,0.72),
         0 0 0 1px rgba(255,255,255,0.08),
-        0 0 0 7px rgba(4,6,15,0.62),
-        0 0 0 10px rgba(0,255,209,0.18),
-        inset 7px 8px 16px rgba(255,255,255,0.06),
-        inset -12px -14px 24px rgba(0,0,0,0.72);
+        0 0 0 5px rgba(2,3,9,0.78),
+        0 0 0 9px rgba(0,255,209,0.2),
+        inset 5px 6px 12px rgba(255,255,255,0.045),
+        inset -12px -15px 22px rgba(0,0,0,0.72);
     }
+    .sc-joystick-shell.sc-dragging,
     .sc-joystick-base.sc-dragging {
+      --sc-joystick-knob-scale: 1.04;
       box-shadow:
-        inset 18px 18px 38px rgba(0,0,0,0.88),
-        inset -10px -10px 24px rgba(120,180,210,0.075),
+        inset 16px 16px 34px rgba(0,0,0,0.74),
+        inset -8px -8px 18px rgba(255,255,255,0.052),
         inset 0 0 0 1px rgba(255,255,255,0.055),
-        0 0 0 1px rgba(0,255,209,0.13),
-        0 22px 46px rgba(0,0,0,0.78),
-        0 0 42px rgba(0,255,209,0.18);
+        0 0 0 1px rgba(0,255,209,0.14),
+        0 26px 52px rgba(0,0,0,0.78),
+        0 0 34px rgba(0,255,209,0.12);
     }
-    .sc-joystick-base.sc-dragging::after {
-      filter: blur(12px);
-      opacity: 0.78;
+    .sc-joystick-shell.sc-dragging .sc-joystick-shadow,
+    .sc-joystick-base.sc-dragging .sc-joystick-shadow {
+      opacity: 0.86;
     }
+    .sc-joystick-shell.sc-dragging .sc-joystick-knob,
     .sc-joystick-base.sc-dragging .sc-joystick-knob {
       box-shadow:
-        18px 24px 34px rgba(0,0,0,0.82),
-        -8px -9px 18px rgba(125,180,210,0.08),
+        15px 21px 30px rgba(0,0,0,0.8),
+        -5px -6px 13px rgba(150,180,200,0.06),
         0 0 0 1px rgba(255,255,255,0.07),
-        0 0 0 7px rgba(4,6,15,0.7),
-        inset 8px 9px 16px rgba(255,255,255,0.07),
-        inset -14px -16px 26px rgba(0,0,0,0.76);
+        0 0 0 5px rgba(2,3,9,0.82),
+        inset 5px 6px 12px rgba(255,255,255,0.05),
+        inset -13px -16px 24px rgba(0,0,0,0.78);
     }
     .sc-joystick-dot {
       position: absolute;
-      width: 8px; height: 8px;
+      width: 9px; height: 9px;
       border-radius: 50%;
-      background: rgba(105,135,150,0.18);
+      background:
+        radial-gradient(circle at 45% 46%, rgba(0,0,0,0.98), #05070d 58%, #101522 100%);
       box-shadow:
-        inset 0 1px 1px rgba(255,255,255,0.08),
-        0 0 0 1px rgba(0,0,0,0.28);
+        inset 2px 2px 4px rgba(0,0,0,0.95),
+        inset -1px -1px 2px rgba(255,255,255,0.04),
+        0 0 0 1px rgba(255,255,255,0.025);
       z-index: 2;
       transition: background 0.1s ease, box-shadow 0.12s ease, transform 0.12s ease;
     }
     .sc-joystick-dot.sc-active {
-      background: #14ffd9;
+      background:
+        radial-gradient(circle at 48% 46%, #effffb 0 12%, #35ffe0 28%, #00d7b8 58%, #06241f 100%);
       box-shadow:
-        0 0 6px rgba(20,255,217,0.95),
-        0 0 16px rgba(20,255,217,0.64),
-        0 0 28px rgba(20,255,217,0.28);
-      transform: scale(1.45);
+        inset 0 0 2px rgba(255,255,255,0.9),
+        0 0 7px rgba(20,255,217,0.98),
+        0 0 17px rgba(20,255,217,0.66),
+        0 0 30px rgba(20,255,217,0.28);
+      transform: scale(1.28);
     }
     .joystick-readout {
       position: relative;
@@ -822,21 +895,30 @@
     <div class="preview" id="prev-joystick" style="height:360px">
       <div class="preview-inner" style="padding:16px">
         <div id="joystick-demo" class="joystick-panel">
-          <div class="joystick-stage">
-            <div class="sc-joystick-base">
-              <button class="sc-joystick-knob" type="button" aria-label="Joystick control"></button>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
-              <span class="sc-joystick-dot"></span>
+          <div class="sc-joystick">
+            <div class="sc-joystick-shell sc-joystick-base">
+              <div class="sc-joystick-led-ring">
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+                <span class="sc-joystick-dot"></span>
+              </div>
+
+              <div class="sc-joystick-socket">
+                <div class="sc-joystick-shadow"></div>
+                <button class="sc-joystick-knob" type="button" aria-label="Joystick control">
+                  <span class="sc-joystick-knob-top"></span>
+                  <span class="sc-joystick-knob-ridge"></span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1228,7 +1310,7 @@
 
   // ── Joystick
   ;(function() {
-    const BASE_SIZE = 240, RADIUS = 64, DOT_RING = 104
+    const BASE_SIZE = 260, RADIUS = 64, DOT_RING = 106
     const base = document.querySelector('#joystick-demo .sc-joystick-base')
     const knob = document.querySelector('#joystick-demo .sc-joystick-knob')
     const dots = [...document.querySelectorAll('#joystick-demo .sc-joystick-dot')]
@@ -1239,8 +1321,8 @@
     // Position 12 dots evenly around the ring
     dots.forEach((dot, i) => {
       const a = (i * 360 / dots.length) * Math.PI / 180
-      dot.style.left = (BASE_SIZE/2 + DOT_RING * Math.sin(a) - 4) + 'px'
-      dot.style.top  = (BASE_SIZE/2 - DOT_RING * Math.cos(a) - 4) + 'px'
+      dot.style.left = (BASE_SIZE/2 + DOT_RING * Math.sin(a) - 4.5) + 'px'
+      dot.style.top  = (BASE_SIZE/2 - DOT_RING * Math.cos(a) - 4.5) + 'px'
     })
 
     let cx = 0, cy = 0, kx = 0, ky = 0, dragging = false
@@ -1250,7 +1332,7 @@
       const r = base.getBoundingClientRect()
       cx = r.left + r.width / 2; cy = r.top + r.height / 2
     }
-    function springEase(t) { return 1 - Math.cos(t * Math.PI * 1.5) * Math.pow(2, -10 * t) }
+    function springEase(t) { return 1 - (1 - t) ** 3 }
 
     function state(x, y) {
       const dist = Math.sqrt(x*x + y*y), prog = Math.min(1, dist/RADIUS)
@@ -1272,7 +1354,9 @@
       base.style.setProperty('--sc-joystick-x', s.x.toFixed(4))
       base.style.setProperty('--sc-joystick-y', s.y.toFixed(4))
       base.style.setProperty('--sc-joystick-progress', s.prog.toFixed(4))
-      knob.style.transform = `translate3d(${kx}px,${ky}px,0) rotateX(calc(var(--sc-joystick-y) * -10deg)) rotateY(calc(var(--sc-joystick-x) * 10deg))`
+      base.style.setProperty('--sc-joystick-knob-x', `${kx.toFixed(2)}px`)
+      base.style.setProperty('--sc-joystick-knob-y', `${ky.toFixed(2)}px`)
+      knob.style.transform = 'translate3d(var(--sc-joystick-knob-x), var(--sc-joystick-knob-y), 18px) rotateX(calc(var(--sc-joystick-y) * -12deg)) rotateY(calc(var(--sc-joystick-x) * 12deg)) scale(var(--sc-joystick-knob-scale))'
       updateDots(s)
       if (elX) elX.textContent = `x: ${s.x.toFixed(2)}`
       if (elY) elY.textContent = `y: ${s.y.toFixed(2)}`
@@ -1284,7 +1368,7 @@
       if (retId) { cancelAnimationFrame(retId); retId = null }
       const fx = kx, fy = ky, t0 = performance.now()
       ;(function step(now) {
-        const t = Math.min(1, (now - t0) / 420), e = springEase(t)
+        const t = Math.min(1, (now - t0) / 360), e = springEase(t)
         kx = fx*(1-e); ky = fy*(1-e); render()
         if (t<1) retId = requestAnimationFrame(step)
         else { kx=0; ky=0; retId=null; render() }
