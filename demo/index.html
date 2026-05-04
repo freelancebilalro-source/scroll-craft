@@ -1003,6 +1003,23 @@
       root.style.setProperty('--sc-liquid-edge', (rect.height * (1-progress)).toFixed(2) + 'px')
     }
 
+    function bounceHandle() {
+      const bounceStart = performance.now()
+      ;(function bounce(now) {
+        const t = Math.min(1, (now - bounceStart) / 400)
+        const bounceEase = Math.abs(Math.sin(t * Math.PI))
+        const offset = bounceEase * 8
+        handleEl.style.transform = `translate3d(0, calc(var(--sc-liquid-edge, 130px) + ${progress > 0.5 ? offset : -offset}px), 0)`
+        if (t < 1) requestAnimationFrame(bounce)
+        else {
+          const rect = getRect()
+          const edgeY = rect.height * (1 - progress)
+          const hH = handleEl.offsetHeight
+          handleEl.style.transform = `translate3d(0, ${edgeY - hH * 0.5}px, 0)`
+        }
+      })(performance.now())
+    }
+
     function snapTo(to, dur) {
       if (snapRafId) { cancelAnimationFrame(snapRafId); snapRafId = null }
       const from = progress, fromC = curveStretch, start = performance.now()
@@ -1014,7 +1031,10 @@
         curveStretch = fromC * (1 - e)
         render()
         if (t < 1) { snapRafId = requestAnimationFrame(step) }
-        else { progress = to; curveStretch = 0; animating = false; snapRafId = null; render() }
+        else {
+          progress = to; curveStretch = 0; animating = false; snapRafId = null; render()
+          if (to === 1) setTimeout(bounceHandle, 200)
+        }
       })(performance.now())
     }
 
