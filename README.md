@@ -403,6 +403,79 @@ The effect sets two CSS custom properties on the root element you can use for st
 | `End` | Complete to 1 |
 | `Enter` / `Space` | Toggle between 0 and 1 |
 
+### Joystick
+
+A neumorphic draggable knob constrained to a circular area. Returns normalized `x`/`y` values, angle, and progress on every frame.
+
+```ts
+import { joystick } from 'scroll-craft'
+
+const stop = joystick('.sc-joystick-base', {
+  radius: 80,
+  returnToCenter: true,
+  spring: true,
+  onMove: ({ x, y, angle, progress }) => {
+    console.log(x, y, angle, progress)
+  },
+  onRelease: (state) => console.log('released', state),
+})
+
+stop() // cleanup
+```
+
+**Required HTML structure:**
+
+```html
+<div class="sc-joystick" id="joystick-demo">
+  <div class="sc-joystick-base">
+
+    <button class="sc-joystick-knob" type="button" aria-label="Joystick control"></button>
+
+    <!-- 12 indicator dots — JS positions them in a ring -->
+    <span class="sc-joystick-dot"></span>
+    <!-- × 12 -->
+
+  </div>
+</div>
+```
+
+**Minimum CSS:**
+
+```css
+/* Pass the sc-joystick-base as the joystick() target so its center is used */
+.sc-joystick-base  { position: relative; border-radius: 50%; }
+.sc-joystick-knob  { position: absolute; top: 50%; left: 50%;
+                     margin-top: -28px; margin-left: -28px;  /* half knob size */
+                     touch-action: none; }
+.sc-joystick-dot   { position: absolute; border-radius: 50%; }
+```
+
+The effect sets four CSS custom properties on the target root:
+
+| Property | Value |
+|---|---|
+| `--sc-joystick-x` | Normalized x, `-1`–`1` |
+| `--sc-joystick-y` | Normalized y, `-1`–`1` |
+| `--sc-joystick-angle` | Degrees, `0`=top, clockwise |
+| `--sc-joystick-progress` | `0`–`1` (distance / radius) |
+
+**`JoystickState` object** (passed to `onMove` and `onRelease`):
+
+| Field | Type | Description |
+|---|---|---|
+| `x` | `number` | Normalized horizontal offset, `-1`–`1` |
+| `y` | `number` | Normalized vertical offset, `-1`–`1` |
+| `angle` | `number` | Degrees from top, 0–360, clockwise |
+| `distance` | `number` | Pixel distance from center |
+| `progress` | `number` | `distance / radius`, clamped 0–1 |
+
+**Keyboard support** (when focus is on the knob):
+
+| Key | Action |
+|---|---|
+| `ArrowUp` / `Down` / `Left` / `Right` | Move knob by 15% of radius |
+| `Home` / `Escape` | Return to center |
+
 ---
 
 ## Chainable API
@@ -428,6 +501,7 @@ sc.reveal('.hero-text', { delay: 100, direction: 'up' })
   .textReveal('.headline', { type: 'words' })
   .zoom('.product-card', { from: 0.94 })
   .liquidSwipe('#liquid-demo', { direction: 'up', threshold: 0.65 })
+  .joystick('.sc-joystick-base', { radius: 80, spring: true })
 
 // Clean up
 sc.destroy()
@@ -562,6 +636,19 @@ Each step accepts:
 | `once` | `boolean` | `true` | Unobserve after first reveal |
 | `inClass` | `string` | `'sc-in'` | Class added when in view |
 
+### `joystick(target, options?)`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `knob` | `string` | `'.sc-joystick-knob'` | Selector for the draggable knob |
+| `indicators` | `string` | `'.sc-joystick-dot'` | Selector for indicator dot elements |
+| `radius` | `number` | `80` | Maximum travel radius in pixels |
+| `returnToCenter` | `boolean` | `true` | Animate knob back to center on release |
+| `spring` | `boolean` | `true` | Use spring-overshoot on return animation |
+| `disabled` | `boolean` | `false` | Disable all interaction |
+| `onMove` | `(state: JoystickState) => void` | — | Called every frame while dragging |
+| `onRelease` | `(state: JoystickState) => void` | — | Called when interaction ends |
+
 ### `liquidSwipe(target, options?)`
 
 > CSS/SVG `clipPath` implementation — no WebGL.
@@ -605,7 +692,7 @@ You can also pass a custom function: `ease: (t) => t * t`
 scroll-craft/
 ├── src/
 │   ├── index.ts      — ScrollCraft class + re-exports
-│   ├── effects.ts    — blurReveal, reveal, counter, parallax, progress, scene, scrollProgress, stagger, textReveal, zoom, liquidSwipe
+│   ├── effects.ts    — blurReveal, reveal, counter, parallax, progress, scene, scrollProgress, stagger, textReveal, zoom, liquidSwipe, joystick
 │   └── easing.ts     — easing functions
 ├── dist/             — built output (ESM + CJS + .d.ts)
 ├── demo/

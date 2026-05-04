@@ -2175,3 +2175,366 @@ export function textReveal(
     })
   }
 }
+
+// ─── joystick ─────────────────────────────────────────────────────────────────
+
+export interface JoystickState {
+  /** Normalized horizontal offset, -1 (left) to 1 (right). */
+  x: number
+  /** Normalized vertical offset, -1 (up) to 1 (down). */
+  y: number
+  /** Angle in degrees, 0 = top, increases clockwise. */
+  angle: number
+  /** Pixel distance from center. */
+  distance: number
+  /** distance / radius clamped 0–1. */
+  progress: number
+}
+
+export interface JoystickOptions {
+  /** Selector for the draggable knob element. Default: '.sc-joystick-knob' */
+  knob?: string
+  /** Selector for indicator dot elements. Default: '.sc-joystick-dot' */
+  indicators?: string
+  /** Maximum travel radius in pixels. Default: 80 */
+  radius?: number
+  /** Animate knob back to center on release. Default: true */
+  returnToCenter?: boolean
+  /** Use spring-like overshoot on the return animation. Default: true */
+  spring?: boolean
+  /** Disable all interaction. Default: false */
+  disabled?: boolean
+  /** Called every frame while dragging or animating. */
+  onMove?: (state: JoystickState) => void
+  /** Called when interaction ends (after return animation if returnToCenter). */
+  onRelease?: (state: JoystickState) => void
+}
+
+type JoystickInternalState = {
+  root: HTMLElement
+  knobEl: HTMLElement | null
+  indicatorEls: HTMLElement[]
+  cx: number
+  cy: number
+  knobX: number
+  knobY: number
+  dragging: boolean
+  rafId: number | null
+  returnRafId: number | null
+  origKnobTransform: string
+  addedRootPosition: boolean
+}
+
+/**
+ * Neumorphic joystick with a draggable knob constrained to a circular area.
+ * Returns a cleanup function that removes all listeners and restores styles.
+ *
+ * @example
+ * const stop = joystick('.sc-joystick-base', {
+ *   radius: 80,
+ *   onMove: ({ x, y, angle, progress }) => console.log(x, y),
+ * })
+ */
+export function joystick(
+  target: string | Element | NodeList | Element[],
+  options: JoystickOptions = {},
+): () => void {
+  const {
+    knob: knobSel = '.sc-joystick-knob',
+    indicators: indicatorSel = '.sc-joystick-dot',
+    radius = 80,
+    returnToCenter = true,
+    spring = true,
+    disabled = false,
+    onMove,
+    onRelease,
+  } = options
+
+  if (disabled) return () => {}
+
+  const roots = resolveElements(target) as HTMLElement[]
+  if (!roots.length) return () => {}
+
+  const reduceMotion = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null
+
+  const states: JoystickInternalState[] = []
+  const eventCleanups: Array<() => void> = []
+
+  function computeCenter(root: HTMLElement): { cx: number; cy: number } {
+    const rect = root.getBoundingClientRect()
+    return { cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2 }
+  }
+
+  function buildJoystickState(knobX: number, knobY: number): JoystickState {
+    const distance = Math.sqrt(knobX * knobX + knobY * knobY)
+    const progress = Math.min(1, distance / radius)
+    const angle = distance < 0.5
+      ? 0
+      : (Math.atan2(knobX, -knobY) * 180 / Math.PI + 360) % 360
+    return {
+      x: knobX / radius,
+      y: knobY / radius,
+      angle,
+      distance,
+      progress,
+    }
+  }
+
+  function joySpringEase(t: number): number {
+    // Decaying cosine — subtle overshoot then settles
+    return 1 - Math.cos(t * Math.PI * 1.5) * Math.pow(2, -10 * t)
+  }
+
+  function joyEaseOut(t: number): number {
+    return 1 - (1 - t) ** 3
+  }
+
+  function updateIndicators(state: JoystickInternalState, js: JoystickState): void {
+    const { indicatorEls } = state
+    if (!indicatorEls.length) return
+
+    const n = indicatorEls.length
+    const step = 360 / n
+    // Number of active dots scales with progress (0 → 0 dots, 1 → up to 5 dots)
+    const activeDotCount = Math.round(js.progress * Math.min(5, Math.ceil(n / 2.4)))
+
+    indicatorEls.forEach((dot, i) => {
+      const dotAngle = i * step
+      let diff = Math.abs(js.angle - dotAngle)
+      if (diff > 180) diff = 360 - diff
+      // Spread: one dot at center, add more on each side
+      const active = activeDotCount > 0 && diff < step * (activeDotCount + 0.5)
+      dot.classList.toggle('sc-active', active)
+    })
+  }
+
+  function applyKnobAndVars(state: JoystickInternalState): void {
+    const js = buildJoystickState(state.knobX, state.knobY)
+
+    if (state.knobEl) {
+      state.knobEl.style.transform = `translate3d(${state.knobX}px, ${state.knobY}px, 0)`
+      state.knobEl.setAttribute(
+        'aria-valuetext',
+        `x ${js.x.toFixed(2)}, y ${js.y.toFixed(2)}, angle ${Math.round(js.angle)} degrees`,
+      )
+    }
+
+    state.root.style.setProperty('--sc-joystick-x', js.x.toFixed(4))
+    state.root.style.setProperty('--sc-joystick-y', js.y.toFixed(4))
+    state.root.style.setProperty('--sc-joystick-angle', js.angle.toFixed(1))
+    state.root.style.setProperty('--sc-joystick-progress', js.progress.toFixed(4))
+
+    updateIndicators(state, js)
+    onMove?.(js)
+  }
+
+  function animateReturn(state: JoystickInternalState, afterReturn?: () => void): void {
+    if (state.returnRafId !== null) {
+      cancelAnimationFrame(state.returnRafId)
+      state.returnRafId = null
+    }
+
+    if (reduceMotion?.matches) {
+      state.knobX = 0
+      state.knobY = 0
+      applyKnobAndVars(state)
+      afterReturn?.()
+      return
+    }
+
+    const fromX = state.knobX
+    const fromY = state.knobY
+    const start = performance.now()
+    const duration = 420
+    const easeFn = spring ? joySpringEase : joyEaseOut
+
+    function step(now: number): void {
+      const t = Math.min(1, (now - start) / duration)
+      const e = easeFn(t)
+      state.knobX = fromX * (1 - e)
+      state.knobY = fromY * (1 - e)
+      applyKnobAndVars(state)
+
+      if (t < 1) {
+        state.returnRafId = requestAnimationFrame(step)
+      } else {
+        state.knobX = 0
+        state.knobY = 0
+        state.returnRafId = null
+        applyKnobAndVars(state)
+        afterReturn?.()
+      }
+    }
+
+    state.returnRafId = requestAnimationFrame(step)
+  }
+
+  function clampToCircle(x: number, y: number): { x: number; y: number } {
+    const dist = Math.sqrt(x * x + y * y)
+    if (dist > radius) {
+      const scale = radius / dist
+      return { x: x * scale, y: y * scale }
+    }
+    return { x, y }
+  }
+
+  roots.forEach((root) => {
+    const knobEl = root.querySelector(knobSel) as HTMLElement | null
+    const indicatorEls = Array.from(root.querySelectorAll(indicatorSel)) as HTMLElement[]
+
+    const computedPos = getComputedStyle(root).position
+    const addedRootPosition = computedPos === 'static'
+    if (addedRootPosition) root.style.position = 'relative'
+
+    const origKnobTransform = knobEl?.style.transform ?? ''
+
+    const { cx, cy } = computeCenter(root)
+
+    const state: JoystickInternalState = {
+      root,
+      knobEl,
+      indicatorEls,
+      cx,
+      cy,
+      knobX: 0,
+      knobY: 0,
+      dragging: false,
+      rafId: null,
+      returnRafId: null,
+      origKnobTransform,
+      addedRootPosition,
+    }
+    states.push(state)
+
+    if (knobEl) {
+      knobEl.setAttribute('role', knobEl.getAttribute('role') ?? 'slider')
+      knobEl.setAttribute('aria-valuetext', 'center')
+      if (!knobEl.getAttribute('aria-label')) {
+        knobEl.setAttribute('aria-label', 'Joystick control')
+      }
+
+      function onPointerDown(e: PointerEvent): void {
+        // Cancel in-flight return
+        if (state.returnRafId !== null) {
+          cancelAnimationFrame(state.returnRafId)
+          state.returnRafId = null
+        }
+        state.dragging = true
+        const c = computeCenter(root)
+        state.cx = c.cx
+        state.cy = c.cy
+        ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+        e.preventDefault()
+      }
+
+      function onPointerMove(e: PointerEvent): void {
+        if (!state.dragging) return
+        const clamped = clampToCircle(e.clientX - state.cx, e.clientY - state.cy)
+        state.knobX = clamped.x
+        state.knobY = clamped.y
+        if (state.rafId !== null) return
+        state.rafId = requestAnimationFrame(() => {
+          state.rafId = null
+          applyKnobAndVars(state)
+        })
+      }
+
+      function onPointerUp(_e: PointerEvent): void {
+        if (!state.dragging) return
+        state.dragging = false
+        if (returnToCenter) {
+          animateReturn(state, () => onRelease?.(buildJoystickState(0, 0)))
+        } else {
+          onRelease?.(buildJoystickState(state.knobX, state.knobY))
+        }
+      }
+
+      function onKeyDown(e: KeyboardEvent): void {
+        const step = radius * 0.15
+        let nx = state.knobX
+        let ny = state.knobY
+
+        if (e.key === 'ArrowUp') {
+          e.preventDefault(); ny = ny - step
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault(); ny = ny + step
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault(); nx = nx - step
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault(); nx = nx + step
+        } else if (e.key === 'Home' || e.key === 'Escape') {
+          e.preventDefault()
+          if (returnToCenter) {
+            animateReturn(state, () => onRelease?.(buildJoystickState(0, 0)))
+          } else {
+            state.knobX = 0; state.knobY = 0
+            applyKnobAndVars(state)
+            onRelease?.(buildJoystickState(0, 0))
+          }
+          return
+        } else {
+          return
+        }
+
+        const clamped = clampToCircle(nx, ny)
+        state.knobX = clamped.x
+        state.knobY = clamped.y
+        applyKnobAndVars(state)
+      }
+
+      knobEl.addEventListener('pointerdown', onPointerDown)
+      knobEl.addEventListener('pointermove', onPointerMove)
+      knobEl.addEventListener('pointerup', onPointerUp)
+      knobEl.addEventListener('pointercancel', onPointerUp)
+      knobEl.addEventListener('keydown', onKeyDown)
+
+      eventCleanups.push(() => {
+        knobEl.removeEventListener('pointerdown', onPointerDown)
+        knobEl.removeEventListener('pointermove', onPointerMove)
+        knobEl.removeEventListener('pointerup', onPointerUp)
+        knobEl.removeEventListener('pointercancel', onPointerUp)
+        knobEl.removeEventListener('keydown', onKeyDown)
+      })
+    }
+
+    applyKnobAndVars(state)
+  })
+
+  function onResize(): void {
+    states.forEach((state) => {
+      if (!state.dragging) {
+        const c = computeCenter(state.root)
+        state.cx = c.cx
+        state.cy = c.cy
+      }
+    })
+  }
+
+  window.addEventListener('resize', onResize)
+
+  return () => {
+    window.removeEventListener('resize', onResize)
+    eventCleanups.forEach((fn) => fn())
+
+    states.forEach((state) => {
+      if (state.rafId !== null) cancelAnimationFrame(state.rafId)
+      if (state.returnRafId !== null) cancelAnimationFrame(state.returnRafId)
+
+      if (state.knobEl) {
+        state.knobEl.style.transform = state.origKnobTransform
+        state.knobEl.removeAttribute('aria-valuetext')
+      }
+
+      state.indicatorEls.forEach((dot) => dot.classList.remove('sc-active'))
+
+      if (state.addedRootPosition) state.root.style.position = ''
+
+      state.root.style.removeProperty('--sc-joystick-x')
+      state.root.style.removeProperty('--sc-joystick-y')
+      state.root.style.removeProperty('--sc-joystick-angle')
+      state.root.style.removeProperty('--sc-joystick-progress')
+    })
+  }
+}
